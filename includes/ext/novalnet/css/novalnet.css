@@ -1,0 +1,18 @@
+
+#novalnet_instalment_table_invoice table, td, th {  
+  border: 1px solid #907e7e !important;
+  text-align: left;
+  padding: 10px;
+}
+
+#novalnet_instalment_table_invoice th,  #novalnet_instalment_table_sepa th {
+  background-color:#a2a2a2;
+}
+
+.autocomplete-items {
+	background: #fff;
+	border: 1px solid #66afe9;
+	position: absolute;
+	width: 86%;
+	z-index: 99;
+}
