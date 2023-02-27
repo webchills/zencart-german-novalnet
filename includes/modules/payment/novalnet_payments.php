@@ -265,8 +265,7 @@ class novalnet_payments extends base {
 	 */
 	public function remove() {
 		global $db;
-		$keys = array_merge($this->keys(), array('MODULE_PAYMENT_NOVALNET_CONFIG_ALLOWED'));
-		$db->Execute("delete from ".TABLE_CONFIGURATION." where configuration_key in ('".implode("', '", $keys)."')");
+		$db->Execute("DELETE FROM " . TABLE_CONFIGURATION . " WHERE configuration_key LIKE 'MODULE\_PAYMENT\_NOVALNET\_%'");		
 	}
 
 	/**
