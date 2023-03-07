@@ -30,35 +30,79 @@ class NovalnetHelper{
 	}
 	
 	/**
+	 * Get billing country
+	 * @param $order
+	 *
+	 * @return string
+	 */
+	public static function getBillingCountry($order){
+		global $db;
+		// For billing
+		if (isset($order->billing['country']['id']) && !empty($order->billing['country']['id'])) {
+			$billing_country_code = $db->Execute("select countries_iso_code_2  from countries where countries_id = '".$order->billing['country']['id']."'");			
+		} else {
+			$billing_country_query = $db->Execute("select countries_id from countries_name where countries_name = '".$order->billing['country']."'");
+			if (isset($billing_country_query->fields['countries_id'])) 
+			$billing_country_code = $db->Execute("select countries_iso_code_2  from countries where countries_id = '".$billing_country_query->fields['countries_id']."'");
+		}
+		if (isset($billing_country_code->fields['countries_iso_code_2']))
+		return ($billing_country_code->fields['countries_iso_code_2']);
+
+	}
+
+	/**
+	 * Get delivery country
+	 * @param $order
+	 *
+	 * @return string
+	 */
+	public static function getDeliveryCountry($order){
+		global $db;
+		// For delivery
+		if (isset($order->delivery['country']['id']) && !empty($order->delivery['country']['id'])) {
+			$delivery_country_code = $db->Execute("select countries_iso_code_2  from countries where countries_id = '".$order->delivery['country']['id']."'");
+		} else {
+			$delivery_country_query = $db->Execute("select countries_id from countries_name where countries_name = '".$order->delivery['country']."'");
+			if (isset($delivery_country_query->fields['countries_id'])) 
+			$delivery_country_code = $db->Execute("select countries_iso_code_2  from countries where countries_id = '".$delivery_country_query->fields['countries_id']."'");
+		}	
+		if(isset($delivery_country_code->fields['countries_iso_code_2']))
+		return ($delivery_country_code->fields['countries_iso_code_2']);
+	}
+
+	/**
 	 * Get customer data
 	 *
 	 * @return $data
 	 */
 	public static function getCustomerData() {
-		global $order;
+		global $order, $db;
+		$billingCountry_code = '';
+		$deliveryCountry_code = '';
+		if (!isset($order->billing['country']['iso_code_2']) && !isset($order->delivery['country']['iso_code_2'])) { // For booking the amount from admin panel
+			$billingCountry_code = self::getBillingCountry($order);
+			$deliveryCountry_code = self::getDeliveryCountry($order);
+		}
 		$data['customer'] = [
 			'gender'      => !empty($order->billing['gender']) ? $order->billing['gender'] : 'u',
 			'first_name'  => !empty($order->billing['firstname']) ? $order->billing['firstname'] : $order->billing['name'],
 			'last_name'   => !empty($order->billing['lastname']) ? $order->billing['lastname'] : $order->billing['name'],
 			'email'       => $order->customer['email_address'],
 			'customer_ip' => zen_get_ip_address(),
-			'customer_no' => $_SESSION['customer_id'],
+			'customer_no' => isset($_SESSION['customer_id']) ? $_SESSION['customer_id'] : $order->customer['id'],
 			'billing'     => [
 				'street'            => !empty($order->billing['suburb']) ? $order->billing['street_address'] . ',' . $order->billing['suburb'] : $order->billing['street_address'],
 				'city'              => $order->billing['city'],
 				'state'              => $order->billing['state'],
 				'zip'               => $order->billing['postcode'],
-				'country_code'      => $order->billing['country']['iso_code_2'],
+				'country_code'      => isset($order->billing['country']['iso_code_2']) ? $order->billing['country']['iso_code_2'] : (isset($billingCountry_code) ? $billingCountry_code : ''),
 				'search_in_street'  => '1',
 			],
 		];
 		if (!empty($order->customer['telephone'])) {
 			$data['customer']['tel'] = $order->customer['telephone'];
 		}
-		if (!empty($order->billing['company'])) {
-			$data['customer']['billing']['company'] = $order->billing['company'];
-		}
-		if (self::isBillingShippingsame()) {
+		if (self::isBillingShippingsame($billingCountry_code, $deliveryCountry_code)) {
 			$data['customer']['shipping']['same_as_billing'] = 1;
 		} else {
 			$data['customer']['shipping']    = [
@@ -66,14 +110,16 @@ class NovalnetHelper{
 				'city'          => $order->delivery['city'],
 				'state'          => $order->delivery['state'],
 				'zip'           => $order->delivery['postcode'],
-				'country_code'  => $order->delivery['country']['iso_code_2'],
+				'country_code'  => isset($order->delivery['country']['iso_code_2']) ? $order->delivery['country']['iso_code_2'] : (isset($deliveryCountry_code) ? $deliveryCountry_code : ''),
 			];
 			if (!empty($order->delivery['company'])) {
 				$data['customer']['shipping']['company'] = $order->delivery['company'];
 			}
 		}
-		if (!empty($_SESSION['nn_booking_details']->birth_date) && empty($order->billing['company'])) {
-			$data['customer']['birth_date'] = date("Y-m-d",strtotime('+'.$_SESSION['nn_booking_details']->birth_date.' days'));;
+		if (isset($_SESSION['nn_booking_details']->birth_date) && !empty($_SESSION['nn_booking_details']->birth_date)) {
+			$data['customer']['birth_date'] = date("Y-m-d",strtotime($_SESSION['nn_booking_details']->birth_date));
+		} else if (!empty($order->billing['company'])) {
+			$data['customer']['billing']['company'] = $order->billing['company'];
 		}
 		return $data;
 	}
@@ -89,8 +135,8 @@ class NovalnetHelper{
 			'amount'           => self::getOrderAmount($order->info['total']),
 			'currency'         => $order->info['currency'],
 			'system_name'      => 'Zen_Cart',
-			'system_version'   => PROJECT_VERSION_MAJOR . '.' . PROJECT_VERSION_MINOR.'-NN13.0.0',
-			'system_url'       => ((ENABLE_SSL == true) ? HTTPS_SERVER : HTTP_SERVER . DIR_WS_CATALOG),
+			'system_version'   => PROJECT_VERSION_MAJOR . '.' . PROJECT_VERSION_MINOR.'-NN13.0.1',
+			'system_url'       => (defined('ENABLE_SSL') ? (ENABLE_SSL == true ? HTTPS_SERVER : HTTP_SERVER . DIR_WS_CATALOG) : (HTTPS_CATALOG_SERVER . DIR_WS_HTTPS_CATALOG)),
 			'system_ip'        => $_SERVER['SERVER_ADDR'],
 		];
 		if (isset($_SESSION['nn_booking_details']->test_mode)) {
@@ -99,7 +145,7 @@ class NovalnetHelper{
 		if (isset($_SESSION['nn_payment_details']->type)) {
             $data['transaction']['payment_type'] = $_SESSION['nn_payment_details']->type;
         }
-		if (!empty($_SESSION['nn_booking_details']->due_date)) {
+		if (isset($_SESSION['nn_booking_details']->due_date) && !empty($_SESSION['nn_booking_details']->due_date)) {
 			$due_date = date("Y-m-d",strtotime('+'.$_SESSION['nn_booking_details']->due_date.' days'));
 			$data['transaction']['due_date'] = $due_date;
 		}
@@ -114,31 +160,29 @@ class NovalnetHelper{
 	public static function getAccountDetails() {
 		$data = [];
             if ($_SESSION['nn_payment_details']->type == 'CREDITCARD') {
-				if (!empty($_SESSION['nn_booking_details']->pan_hash) || !empty($_SESSION['nn_booking_details']->unique_id))
+				if ((isset($_SESSION['nn_booking_details']->pan_hash) && !empty($_SESSION['nn_booking_details']->pan_hash)) || ((isset($_SESSION['nn_booking_details']->unique_id)) && !empty($_SESSION['nn_booking_details']->unique_id)))
                 $data['transaction']['payment_data'] = [
                     'pan_hash'   => $_SESSION['nn_booking_details']->pan_hash,
                     'unique_id'  => $_SESSION['nn_booking_details']->unique_id
                 ];             
             }
             if (in_array($_SESSION['nn_payment_details']->type, array('DIRECT_DEBIT_SEPA', 'INSTALMENT_DIRECT_DEBIT_SEPA', 'GUARANTEED_DIRECT_DEBIT_SEPA'))) {
-				if ($_SESSION['nn_booking_details']->iban != '') {
+				if (isset($_SESSION['nn_booking_details']->iban) && $_SESSION['nn_booking_details']->iban != '') {
 					$data['transaction']['payment_data'] ['iban'] = $_SESSION['nn_booking_details']->iban;
-					if($_SESSION['nn_booking_details']->bic != '') {
+					if(isset($_SESSION['nn_booking_details']->bic) && $_SESSION['nn_booking_details']->bic != '') {
 						$data['transaction']['payment_data'] ['bic'] = $_SESSION['nn_booking_details']->bic;
 					}
 				}
 			}
-			if(!empty($_SESSION['nn_booking_details']->payment_ref->token) && (empty($_SESSION['nn_booking_details']->pan_hash) || empty($_SESSION['nn_booking_details']->unique_id))) { // Reference transaction
+			if((isset($_SESSION['nn_booking_details']->payment_ref->token) && !empty($_SESSION['nn_booking_details']->payment_ref->token)) && ((isset($_SESSION['nn_booking_details']->pan_hash) && empty($_SESSION['nn_booking_details']->pan_hash)) || (isset($_SESSION['nn_booking_details']->unique_id) && empty($_SESSION['nn_booking_details']->unique_id)))) { // Reference transaction
 				$data['transaction']['payment_data']['token'] = $_SESSION['nn_booking_details']->payment_ref->token;
 				unset($_SESSION['nn_booking_details']->payment_ref->token);
-			} elseif(($_SESSION['nn_booking_details']->create_token == '1') && ((!empty($_SESSION['nn_booking_details']->pan_hash) || !empty($_SESSION['nn_booking_details']->unique_id)) || !empty($_SESSION['nn_booking_details']->iban)) ){ // New transaction
+			} elseif((isset($_SESSION['nn_booking_details']->create_token) && $_SESSION['nn_booking_details']->create_token == '1') && (((isset($_SESSION['nn_booking_details']->pan_hash) && !empty($_SESSION['nn_booking_details']->pan_hash)) || (isset($_SESSION['nn_booking_details']->unique_id) && !empty($_SESSION['nn_booking_details']->unique_id))) || (isset($_SESSION['nn_booking_details']->iban) && !empty($_SESSION['nn_booking_details']->iban))) ){ // New transaction
 				$data['transaction']['create_token'] = 1;
 				unset($_SESSION['nn_booking_details']->create_token);
-			} 
+			}
             if (in_array($_SESSION['nn_payment_details']->type, array('GOOGLEPAY', 'CREDITCARD')) && (isset($_SESSION['nn_booking_details']->enforce_3d))) {
-                if ($_SESSION['nn_booking_details']->enforce_3d == 1) {
-					$data['transaction']['enforce_3d'] = '1';
-				} 
+				$data['transaction']['enforce_3d'] = $_SESSION['nn_booking_details']->enforce_3d;
             }
 		return $data;
 	}
@@ -178,21 +222,28 @@ class NovalnetHelper{
 	 * @return $response
 	 */
 	public static function getRedirectData(&$params) {
-		if ($_SESSION['nn_payment_details']->type == 'PAYPAL') {
+		if (isset($_SESSION['nn_payment_details']->type) && $_SESSION['nn_payment_details']->type == 'PAYPAL') {
 			self::paypal_sheet_details($params);
 		}
-		if ($_SESSION['nn_payment_details']->type == 'GOOGLEPAY') {
-            $params['transaction']['payment_data']['wallet_token'] = $_SESSION['nn_booking_details']->wallet_token;
+		if (isset($_SESSION['nn_payment_details']->type) && in_array($_SESSION['nn_payment_details']->type, array('CREDITCARD', 'GOOGLEPAY')) && isset($_SESSION['nn_booking_details']->do_redirect)) {
+			$params['transaction']['do_redirect'] = $_SESSION['nn_booking_details']->do_redirect;
+		}
+		if (isset($_SESSION['nn_payment_details']->type) && $_SESSION['nn_payment_details']->type == 'GOOGLEPAY') {
+            $params['transaction']['payment_data']['wallet_token'] = isset($_SESSION['nn_booking_details']->wallet_token) ? $_SESSION['nn_booking_details']->wallet_token : '';
         }
-        if(!empty($_SESSION['nn_booking_details']->token)) {
+        if(isset($_SESSION['nn_payment_details']->token) && !empty($_SESSION['nn_booking_details']->token)) {
             $params['transaction'] = array_merge(NovalnetHelper::getTransactionData()['transaction'], NovalnetHelper::getAccountDetails()['transaction']);
         }
-        if ($_SESSION['nn_payment_details']->type == 'CREDITCARD') {
+        if (isset($_SESSION['nn_payment_details']->type) && $_SESSION['nn_payment_details']->type == 'CREDITCARD') {
             $params['transaction'] = array_merge(NovalnetHelper::getTransactionData()['transaction'], NovalnetHelper::getAccountDetails()['transaction']);
         }
         $params['transaction']['return_url']       = ((isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") ? 'https://' : 'http://') . $_SERVER['HTTP_HOST']. $_SERVER['REQUEST_URI'];
         $params['transaction']['error_return_url'] = ((isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") ? 'https://' : 'http://') . $_SERVER['HTTP_HOST']. $_SERVER['REQUEST_URI'];
-        if ($_SESSION['nn_booking_details']->payment_action == 'authorized') {
+		if (isset($_SESSION['nn_booking_details']->payment_action) && $_SESSION['nn_booking_details']->payment_action == 'zero_amount' && in_array($_SESSION['nn_payment_details']->type, array('CREDITCARD', 'DIRECT_DEBIT_SEPA'))) {
+			$params['transaction']['amount'] = 0;
+			$params['transaction']['create_token'] = 1;
+		}
+        if (isset($_SESSION['nn_booking_details']->payment_action) && $_SESSION['nn_booking_details']->payment_action == 'authorized') {
             $response = self::sendRequest($params, self::getActionEndpoint('authorize'));
         } else {
             $response = self::sendRequest($params, self::getActionEndpoint('payment'));
@@ -205,21 +256,23 @@ class NovalnetHelper{
 	 *
 	 * @return boolean
 	 */
-	public static function isBillingShippingsame() {
-		global $order;
+	public static function isBillingShippingsame($billingCountry_code, $deliveryCountry_code) {
+		global $order; $delivery_address =[]; $billing_address = [];
 		$delivery_address = array(
 			'street'   => ($order->delivery['street_address']),
 			'city'     => ( $order->delivery['city']),
 			'postcode' => ( $order->delivery['postcode']),
-			'country'  => ($order->delivery['country']['iso_code_2']),
+			'country'  => (isset($order->delivery['country']['iso_code_2']) ? $order->delivery['country']['iso_code_2'] : (isset($deliveryCountry_code) && !empty($deliveryCountry_code) ? $deliveryCountry_code : '')),
 		);
 		$billing_address = array(
 			'street'   => ($order->billing['street_address']),
 			'city'     => ($order->billing['city']),
 			'postcode' => ($order->billing['postcode']),
-			'country'  => ($order->billing['country']['iso_code_2']),
+			'country'  => (isset($order->billing['country']['iso_code_2']) ? $order->billing['country']['iso_code_2'] : (isset($billingCountry_code) && !empty($billingCountry_code) ? $billingCountry_code : '')),
 		);
-		return ($delivery_address === $billing_address);
+		if ( ($billing_address === $delivery_address) || (empty($delivery_address['street']) && empty($delivery_address['city']) && empty($delivery_address['postcode']) && empty($delivery_address['country']))) {
+			return true;
+		}
 	}
 
 	/**
@@ -229,7 +282,9 @@ class NovalnetHelper{
 	 * @return int
 	 */
 	public static function getOrderAmount($order_amount) {
-		return (sprintf('%0.2f', $order_amount) * 100);
+		global $order; $amount = 0;
+		$amount = ($order->info['currency_value'] != 0) ? ($order_amount * $order->info['currency_value']) : $order_amount;
+		return (sprintf('%0.2f', $amount) * 100);
 	}
 
 	/**
@@ -239,57 +294,69 @@ class NovalnetHelper{
 	 */
 	public static function getWalletParam() {
 		 global $order, $db;
+		 $tax_value = 0; 
+		 $coupon_amount = 0; $total = 0;
+		 $discount = 0;
+		 $currency_value = ($order->info['currency_value'] != 0) ? ($order->info['currency_value']) : '';
 		 $articleDetails = [];
 		 foreach($order->products as $key => $products) {
-			 if (!empty($order->info['coupon_code'])) {
+			 if (isset($order->info['coupon_code']) && !empty($order->info['coupon_code'])) {
 				$coupon_amount = $db->Execute("select coupon_amount from ".TABLE_COUPONS." where coupon_code = '".$order->info['coupon_code']."'");
-				if ($coupon_amount->RecordCount())
-					$discountTax = zen_calculate_tax($coupon_amount->fields['coupon_amount'], $products['tax']);
 			 }
 			 if (DISPLAY_PRICE_WITH_TAX == 'true') {
 				$articleDetails[] = array(			// To add product details
 					  'label'=> str_replace("'", "#single_quote", $products['name']). ' x ' .$products['qty'],
-					  'amount' => (string)(($products['qty'] * (round($products['final_price'] + zen_calculate_tax($products['price'], $products['tax']), 2)))*100),
+					  'amount' => (string)(($products['qty'] * (round(($products['final_price'] * $currency_value) + zen_calculate_tax($products['final_price'], $products['tax']), 2)))*100),
 					  'type' => 'SUBTOTAL',
 				);
 			} else {
 				$articleDetails[] = array(			// To add product details
 					  'label'=> str_replace("'", "#single_quote", $products['name']). ' x ' .$products['qty'],
-					  'amount' => (string)(($products['qty'] * $products['final_price'])*100),
+					  'amount' => (string)(($products['qty'] * $products['final_price'] * $currency_value)*100),
 					  'type' => 'SUBTOTAL',
 				);
 			}
+		}
 			if ($order->info['tax'] != 0) {
+				foreach($order->info['tax_groups'] as $key => $value){
+					$tax_value += $value;
+				}
 				if(DISPLAY_PRICE_WITH_TAX == 'true') {	// Price incl tax
 					$articleDetails[] = array(
 						'label'		=> 'Incl.Tax',
-						'amount' 	=> (string) (round(($order->info['tax']), 2) * 100),
+						'amount' 	=> (string) (round(($tax_value * $currency_value), 2)) * 100,
 						'type' 		=> 'SUBTOTAL'
 					);
 				} else {	// Price excl tax
 					$articleDetails[] = array(
 						'label'		=> 'Excl.Tax',
-						'amount' 	=> (string) (round(($order->info['tax'] ), 2) * 100),
+						'amount' 	=> (string) (round(($tax_value * $currency_value), 2)) * 100,
 						'type' 		=> 'SUBTOTAL'
 					);
 				}
 			}
-			if ($_SESSION['cot_gv'] != 0.00 || !empty($order->info['coupon_code'])) {		// To add discount coupon or gift certificate
+			if ($_SESSION['cot_gv'] != 0.00 || (isset($order->info['coupon_code']) && !empty($order->info['coupon_code']))) {		// To add discount coupon or gift certificate
+
+				$total = $coupon_amount->fields['coupon_amount'] / $order->info['subtotal'];
+				foreach($order->info['tax_groups'] as $key => $value){
+					$tax_amount += zen_round($value * $total, 2);
+				}
+				$discount = (isset($order->info['coupon_amount']) && !empty($order->info['coupon_amount'])) ? $order->info['coupon_amount'] : ($tax_amount  + $coupon_amount->fields['coupon_amount']);
 				if (DISPLAY_PRICE_WITH_TAX == 'true'){ 		//  Discount Incl Tax
-					$deduction = $coupon_amount->fields['coupon_amount']  + $_SESSION['cot_gv'];
+					$deduction = $discount + $_SESSION['cot_gv'];
 				} else {			//  Discount Excl Tax
-					$deduction = $coupon_amount->fields['coupon_amount'] + $discountTax + $_SESSION['cot_gv'];
+					$deduction = $discount  + $_SESSION['cot_gv'];
 				}
 				$articleDetails[] = array(
 					'label'=> 'Discount',
-					'amount' => (string) (round($deduction, 2) * 100),
+					'amount' => (string) (round(($deduction * $currency_value), 2) * 100),
 					'type' => 'SUBTOTAL'
 				);
 			}
-		 }
+
 		 $articleDetails[] = array(		// To add shipping
 				 'label'=> 'Shipping',
-				'amount' => (string)($order->info['shipping_cost']*100),
+				'amount' => (string)(($order->info['shipping_cost'] * $currency_value)*100),
 				'type' => 'SUBTOTAL'
 		 );
 		$wallet_hidden_field = "<input type='hidden' value='". json_encode($articleDetails)."' id='nn_article_details'>";
@@ -357,6 +424,7 @@ class NovalnetHelper{
 		$txn_details = '';
 		if (! empty($response ['transaction']['tid'])) {
 			if ($response ['transaction']['payment_type'] == 'GOOGLEPAY') {
+				if (isset($response['transaction']['payment_data']))
 				$txn_details .= PHP_EOL. sprintf(MODULE_PAYMENT_NOVALNET_WALLET_PAYMENT_SUCCESS_TEXT, $response['transaction']['payment_data']['last_four']);
 			}
 			$txn_details .= PHP_EOL. MODULE_PAYMENT_NOVALNET_TRANSACTION_ID .$response['transaction']['tid'];
@@ -371,7 +439,7 @@ class NovalnetHelper{
 			$txn_details .= PHP_EOL . MODULE_PAYMENT_NOVALNET_MENTION_GUARANTEE_PAYMENT_PENDING_TEXT.PHP_EOL;
 		}
 		// Only for Multibanco
-		if ($response['transaction']['payment_type'] == 'MULTIBANCO') {
+		if ($response['transaction']['payment_type'] == 'MULTIBANCO' && isset($response['transaction']['partner_payment_reference'])) {
 			$amount = $currencies->format($response['transaction']['amount']/100, true, $response['transaction']['currency']);
 			$txn_details .= PHP_EOL . PHP_EOL . sprintf(MODULE_PAYMENT_NOVALNET_MULTIBANCO_NOTE, $amount);
 			$txn_details .= PHP_EOL . sprintf(MODULE_PAYMENT_NOVALNET_PARTNER_PAYMENT_REFERENCE, $response['transaction']['partner_payment_reference']) . PHP_EOL;
@@ -388,9 +456,11 @@ class NovalnetHelper{
 	public static function getBankDetails($response) {
 		global $currencies;
 		$note = '';
-		$amount = $currencies->format($response['transaction']['amount']/100, true, $response['transaction']['currency']);
+		$amount = 0;
+		$bank_details = [];
+		$amount = $currencies->format($response['transaction']['amount']/100, false, $response['transaction']['currency']);
 		if (!empty($response['instalment']['cycle_amount'])) {
-			$amount = $currencies->format($response['instalment']['cycle_amount']/100, true, $response['transaction']['currency']);
+			$amount = $currencies->format($response['instalment']['cycle_amount']/100, false, $response['transaction']['currency']);
 		}
 		$note = PHP_EOL .PHP_EOL.sprintf(MODULE_PAYMENT_NOVALNET_AMOUNT_TRANSFER_NOTE, $amount) . PHP_EOL .PHP_EOL;
 		if($response['transaction']['status'] != 'ON_HOLD' && !empty($response['transaction']['due_date'])) { // If due date is not empty
@@ -458,7 +528,8 @@ class NovalnetHelper{
 	public static function getInstalmentDetails($response) {
 		global $currencies;
 		$txn_details = '';
-		$amount = $currencies->format($response['instalment']['cycle_amount']/100, true, $response['instalment']['currency']);
+		$amount = 0;
+		$amount = $currencies->format($response['instalment']['cycle_amount']/100, false, $response['instalment']['currency']);
 		if ($response['transaction']['status'] == 'CONFIRMED') {
 			$txn_details .=  PHP_EOL.PHP_EOL.MODULE_PAYMENT_NOVALNET_INSTALMENT_INSTALMENTS_INFO.PHP_EOL.MODULE_PAYMENT_NOVALNET_INSTALMENT_PROCESSED_INSTALMENTS.$response['instalment']['cycles_executed'] . PHP_EOL;
 			$txn_details .=  MODULE_PAYMENT_NOVALNET_INSTALMENT_DUE_INSTALMENTS.$response['instalment']['pending_cycles']. PHP_EOL;
@@ -479,6 +550,7 @@ class NovalnetHelper{
 	 * @return $order_status_id
 	 */
 	public static function getOrderStatus($transaction_status, $payment_name) {
+		$order_status_id = '';
 		if ($transaction_status == 'PENDING' && $payment_name == 'INVOICE') {
 			$order_status_id = 2;
 		} elseif ($transaction_status == 'PENDING') {
@@ -527,13 +599,19 @@ class NovalnetHelper{
 			$payment_details = $response['transaction']['nearest_stores'];
 			$payment_details['novalnet_due_date'] = $response['transaction']['due_date'];
 			$novalnet_transaction_details['payment_details'] = json_encode($payment_details);
-		} elseif (!empty($response['transaction']['payment_data']['token']) && $_SESSION['nn_booking_details']->create_token == '1') {
+		} elseif (!empty($response['transaction']['payment_data']['token']) && isset($_SESSION['nn_booking_details']->create_token) && $_SESSION['nn_booking_details']->create_token == '1') {
+			$payment_data = [];
 			$payment_data = $response['transaction']['payment_data'];
 			if ($_SESSION['nn_booking_details']->payment_action == 'zero_amount') {
 				$payment_data['zero_amount_booking'] = 1;
 			}
 			$novalnet_transaction_details['payment_details'] = json_encode($payment_data);
-		} elseif (!empty($response['transaction']['payment_data']['token']) && $_SESSION['nn_booking_details']->payment_action == 'zero_amount' && $_SESSION['nn_booking_details']->create_token == '0') {
+		} elseif (!empty($response['transaction']['payment_data']['token']) 
+		&& isset($_SESSION['nn_booking_details']->payment_action) && 
+		($_SESSION['nn_booking_details']->payment_action == 'zero_amount') || 
+		(isset($_SESSION['nn_booking_details']->create_token) && $_SESSION['nn_booking_details']->create_token == '0')) {
+			$cardDetails = [];
+			if (isset($response['transaction']['payment_data']['token']))
 			$cardDetails = array(
 					'token' => $response['transaction']['payment_data']['token'],
 					'zero_amount_booking' => 1
@@ -696,22 +774,6 @@ class NovalnetHelper{
 	}
 
 	/**
-	 * Get tokenization details
-	 * @param $payment_name
-	 *
-	 * @return $data
-	 */
-	public static function getToeknizationDetails(&$transaction_data) {
-			if(!empty($_SESSION['nn_booking_details']->payment_ref_token) && (empty($_SESSION['nn_booking_details']->pan_hash) || empty($_SESSION['nn_booking_details']->unique_id))) { // Reference transaction
-				$transaction_data['transaction']['payment_data']['token'] = $_SESSION['nn_booking_details']->payment_ref_token;
-				unset($_SESSION['nn_booking_details']->payment_ref_token);
-			} elseif(($_SESSION['nn_booking_details']->create_token == '1') && (!empty($_SESSION['nn_booking_details']->pan_hash) || !empty($_SESSION['nn_booking_details']->unique_id))) { // New transaction
-				$transaction_data['transaction']['create_token'] = 1;
-				unset($_SESSION['nn_booking_details']->create_token);
-			}
-	}
-
-	/**
 	 * Check for the success status of the Novalnet payment call.
 	 *
 	 * @param $data.
@@ -772,18 +834,21 @@ class NovalnetHelper{
 		}
 		return $value;
 	}
-	
+
 	/**
 	 * Paypal sheet details
 	 *
 	 * @return $params
 	 */
 	public static function paypal_sheet_details(&$params) {
-		global $order, $db;				
+		global $order, $db;
+		$currency_value = ($order->info['currency_value'] != 0) ? ($order->info['currency_value']) : '';
+
 		foreach ($order->products as $products){
 			if (isset($products['attributes'])) {
+				$attributes = '';
 				foreach ($products['attributes'] as $attr => $value) {
-					$attributes[] = ', ' . $value['option'] . ':' . $value['value'];
+					$attributes .= ', ' . $value['option'] . ':' . $value['value'];
 				}
 			}
 			if ($products['products_weight'] != 0) {
@@ -791,30 +856,73 @@ class NovalnetHelper{
 			} else {
 				$product_type = 'digital';
 			}
-			$productId = str_split($products['id']);
+			$productId = explode(":",$products['id']);
 			$product_desc = $db->Execute("select products_description from " . TABLE_PRODUCTS_DESCRIPTION . " where language_id = '" . $_SESSION['languages_id'] . "' and products_id = '" . $productId[0] . "'");
 			$params['cart_info']['line_items'][] = array(
-						'name'        => $products['name']. ' x ' .$products['qty'] . $attributes,
-						'price'       => (string) (round((float) $products['price'] * 100)),
+						'name'        => $products['name'] . $attributes,
+						'price'       => (string) (round((float) ($products['final_price'] * $currency_value), 2)) * 100,
 						'quantity'    => $products['qty'],
 						'description' => !empty($product_desc->products_description) ? $product_desc->products_description : '',
 						'category'    => $product_type,
 			);
 
 		}
-	
-		if (!empty($order->info['coupon_code'])) {
-		$discount_amount = (string) (round((float) $order->info['coupon_amount'] * 100));
+
+		if (isset($order->info['coupon_code']) && !empty($order->info['coupon_code']) && !empty($order->info['coupon_amount'])) {
+		$discount_amount = (string) (round((float) $order->info['coupon_amount'], 2)) * 100;
 			$params['cart_info']['line_items'][] = array(
-						'name'        => 'Discount',
-						'price'       => $discount_amount,
+						'name'        => 'Discount coupon',
+						'price'       => '-'.$discount_amount,
 						'quantity'    => 1,
 						'description' => '',
 						'category'    => '',
 			);
 		}
-		$params['cart_info']['items_tax_price'] = (string) (round((float) $order->info['tax'] * 100));
-		$params['cart_info']['items_shipping_price'] = (string) (round((float) $order->info['shipping_cost'] * 100));
+		if ($_SESSION['cot_gv'] != 0.00) {
+			$params['cart_info']['line_items'][] = array(
+						'name'        => 'Gift certificate',
+						'price'       => '-'.(string) (round((float) $_SESSION['cot_gv'], 2)) * 100,
+						'quantity'    => 1,
+						'description' => '',
+						'category'    => '',
+			);
+		}
+		$params['cart_info']['items_tax_price'] = (string) (round((float) ($order->info['tax'] * $currency_value), 2)) * 100;
+		$params['cart_info']['items_shipping_price'] = (string) (round((float) ($order->info['shipping_cost'] * $currency_value), 2)) * 100;
 	}
+
+	/**
+     * Get order status ID.
+     *
+     * @return $status_id
+     */
+	public static function getOrderStatusId(){
+		global $db;
+		$status_id = '';
+		$order_status = $db->Execute("SELECT orders_status_name, orders_status_id FROM ".TABLE_ORDERS_STATUS." WHERE orders_status_name LIKE '%cancel%'");
+		if ($order_status->link->affected_rows > 0) {
+			$status_id = $order_status->fields['orders_status_id'];
+		}
+		return $status_id;
+	}
+
+	/**
+     * send payment confirmation mail to customer.
+     *
+     * @param $comments, $order_no
+     *
+     * @return boolean
+     */
+   public static function sendPaymentConfirmationMail($comments, $order_no){
+		global $db, $currencies;
+		$customer_info = '';
+		$customer_info = $db->Execute("SELECT * FROM ".TABLE_ORDERS." WHERE orders_id = '".$order_no."'");
+        $customer_details = $customer_info->fields;
+        $customer_name = $customer_details['customers_name'];
+        $email_subject   = sprintf(MODULE_PAYMENT_NOVALNET_ORDER_MAIL_SUBJECT, $order_no,STORE_NAME);
+        $email_content   = MODULE_PAYMENT_NOVALNET_CUSTOMER_SALUTATION. '<b>'.$customer_details['customers_name'].'</b>'. PHP_EOL .PHP_EOL. sprintf(MODULE_PAYMENT_NOVALNET_ORDER_MAIL_MESSAGE, STORE_NAME). PHP_EOL. PHP_EOL . sprintf(MODULE_PAYMENT_NOVALNET_ORDER_NUMBER, $order_no) . PHP_EOL. PHP_EOL. sprintf(MODULE_PAYMENT_NOVALNET_ORDER_MAIL_DATE, strftime(DATE_FORMAT_LONG)).PHP_EOL. PHP_EOL.  MODULE_PAYMENT_NOVALNET_ORDER_CONFIRMATION .zen_href_link(FILENAME_ACCOUNT_HISTORY_INFO, 'order_id=' . $order_no, 'SSL', false) . PHP_EOL . nl2br($comments);
+        $email_content .= PHP_EOL .PHP_EOL.MODULE_PAYMENT_NOVALNET_DELIVERY_ADDRESS. PHP_EOL. $customer_details['delivery_name'] .PHP_EOL .  $customer_details['delivery_street_address'] . PHP_EOL. $customer_details['delivery_postcode'] . PHP_EOL . $customer_details['delivery_city'] . PHP_EOL . $customer_details['delivery_country'] . PHP_EOL;
+        $email_content .= PHP_EOL .MODULE_PAYMENT_NOVALNET_BILLING_ADDRESS. PHP_EOL. $customer_details['billing_name'] .PHP_EOL .  $customer_details['billing_street_address'] . PHP_EOL. $customer_details['billing_postcode'] . PHP_EOL . $customer_details['billing_city'] . PHP_EOL . $customer_details['billing_country'] . PHP_EOL;
+        zen_mail($customer_name, $customer_details['customers_email_address'], $email_subject, str_replace('</br>',PHP_EOL,$email_content), '', '', array(), '', '', STORE_NAME, EMAIL_FROM);
+    }
 }
-?>

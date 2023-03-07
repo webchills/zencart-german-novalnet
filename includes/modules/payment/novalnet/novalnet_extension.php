@@ -33,6 +33,7 @@ if (defined('MODULE_PAYMENT_NOVALNET_ENABLE_PAYMENT_METHOD') && MODULE_PAYMENT_N
 		&& (($transaction_details->fields['status'] == 'CONFIRMED' && ($transaction_details->fields['amount'] != $transaction_details->fields['refund_amount']))
 		|| ($transaction_details->fields['status']=='PENDING'  && ($transaction_details->fields['amount'] > $transaction_details->fields['refund_amount']) && in_array($transaction_details->fields['payment_type'], array('INVOICE','PREPAYMENT','CASHPAYMENT'))))
 		&& !in_array($transaction_details->fields['payment_type'],array('MULTIBANCO','INSTALMENT_INVOICE','INSTALMENT_DIRECT_DEBIT_SEPA'))) {
+			$avail_refund = 0; $refund_value = 0;
 			$output .= '<td><table class="noprint">';
 			$output .= '<tr class="dataTableHeadingRow" style="background-color : #dddddd;">';
 			$output .= '<td><label class="title">'.MODULE_PAYMENT_NOVALNET_REFUND_TITLE . '</label></td><td></td></tr></br>'."\n";
@@ -57,6 +58,7 @@ if (defined('MODULE_PAYMENT_NOVALNET_ENABLE_PAYMENT_METHOD') && MODULE_PAYMENT_N
 		$order_total = $db->Execute("SELECT value FROM " . TABLE_ORDERS_TOTAL . " where class = 'ot_total' AND orders_id = " . zen_db_input($order_id));
 		if ($transaction_details->fields['amount'] == 0 && in_array($transaction_details->fields['payment_type'],array('CREDITCARD','DIRECT_DEBIT_SEPA'))
 		&& $transaction_details->fields['status'] == 'CONFIRMED') {
+			$amount = 0;
 			$output .= '<td><table class="noprint">';
 			$output .= '<tr class="dataTableHeadingRow" style="background-color : #dddddd;">';
 			$output .= '<td><label class="title">'.MODULE_PAYMENT_NOVALNET_BOOK_TITLE . '</label></td><td></td></tr></br>'."\n";
@@ -68,7 +70,7 @@ if (defined('MODULE_PAYMENT_NOVALNET_ENABLE_PAYMENT_METHOD') && MODULE_PAYMENT_N
 			$output .=  zen_draw_hidden_field('oID', $request['oID']);
 			$output .=  zen_draw_hidden_field('nn_refund_amount', MODULE_PAYMENT_NOVALNET_PAYMENT_REFUND_CONFIRM);
 			$output .= '<td class="dataTableContent">';
-			$amount = $order_total->fields['value']*100;
+			$amount = round($order_total->fields['value'] ,2)*100;
 			$output .= zen_draw_input_field('book_amount',$amount,'id="book_amount" autocomplete="off" style="margin:0% 0% 0% 2%"') . MODULE_PAYMENT_NOVALNET_AMOUNT_EX . '</td></tr>';
 			$output .= '<tr class="dataTableRow"><td class="dataTableContent">'.zen_draw_input_field('nn_book_confirm',html_entity_decode(MODULE_PAYMENT_NOVALNET_CONFIRM_TEXT),'class="btn btn-primary" onclick="return refund_amount_validation();" style="float:left"',false,'submit').'</td><td></td></tr>';
 			$output .= '</form>';
@@ -76,6 +78,7 @@ if (defined('MODULE_PAYMENT_NOVALNET_ENABLE_PAYMENT_METHOD') && MODULE_PAYMENT_N
 		}
 		// On-hold process
 		if($transaction_details->fields['status'] == 'ON_HOLD') {
+			$options = [];
 			$output .= '<td><table class="noprint">';
 			$output .= '<tr class="dataTableHeadingRow" style="background-color : #dddddd;">';
 			$output .= '<td class="main"><label class="title">'.MODULE_PAYMENT_NOVALNET_TRANS_CONFIRM_TITLE . '</label></td><td></td></tr></br>'."\n";
@@ -100,53 +103,51 @@ if (defined('MODULE_PAYMENT_NOVALNET_ENABLE_PAYMENT_METHOD') && MODULE_PAYMENT_N
 		}
 		// Instalment refund and cancel process
 		if (in_array($transaction_details->fields['payment_type'],array('INSTALMENT_INVOICE','INSTALMENT_DIRECT_DEBIT_SEPA'))) {
-		$instalment_details = (!empty($transaction_details->fields['instalment_cycle_details'])) ? json_decode($transaction_details->fields['instalment_cycle_details'], true) : unserialize($transaction_details->fields['payment_details']);
+		$instalment_details = json_decode($transaction_details->fields['instalment_cycle_details'], true) ;
 			if(!empty($instalment_details)) {
-				$output .= '<script>
-					function myFunction(cycle) {
-					  var refund_id = document.getElementById("instalment_refund_"+cycle);
-					  if (refund_id.style.display === "none") {
-						refund_id.style.display = "block";
-					  } else {
-						refund_id.style.display = "none";
-					  }
-					}
-					</script>
-					<style>
-						#nn_refund {
-							width: 100%;
-							height: 100%;
-							background: #4E9CAF;
-							padding: 10px;
-							text-align: center;
-							border-radius: 5px;
-							color: white;
-							font-weight: bold;
-							line-height: 25px;
+				$output .= '
+					<script>
+						function myFunction(cycle) {
+						  var refund_id = document.getElementById("instalment_refund_"+cycle);
+						  if (refund_id.style.display === "none") {
+							refund_id.style.display = "block";
+						  } else {
+							refund_id.style.display = "none";
+						  }
 						}
-					</style>';
+					</script>';
 				$output .= '<td><table class="noprint table">';
 				$output .= '<tr class="dataTableHeadingRow" style="background-color : #dddddd;">';
 				$output .= '<td class="main" colspan="6"><label style="font-size: 12px;">'.MODULE_PAYMENT_NOVALNET_INSTALMENT_SUMMARY_BACKEND . '</label></td><td></td></tr></br>'."\n";
 				$output .= '<tr class="dataTableHeadingRow"><td class="dataTableContent" colspan="6">';
-				$nn_instalment_canceled = false;
-				foreach ($instalment_details as $key => $instalment_details_data){
-					if ($instalment_details_data['status'] == 'Canceled'){
-						$nn_instalment_canceled = true;
-						break;
-					}
+				$instalment_status = [];
+				foreach($instalment_details as $key => $instalment_details_data){
+					array_push($instalment_status,$instalment_details_data['status']);
 				}
+
+				$nn_instalment_canceled = false;
+				$nn_instacancel_remaining = 'style="display:block"';
+				$nn_instacancel_allcycles = 'style="display:block"';
+				if (in_array('Canceled', $instalment_status)) {
+					$nn_instalment_canceled = true;
+				} else if (in_array('Refunded', $instalment_status)) {
+					$nn_instacancel_remaining = 'style="display:block"';
+					$nn_instacancel_allcycles = 'style="display:none"';
+				}
+
 				if ($nn_instalment_canceled == false) {
 					$output .= '<button id="nn_instalment_cancel" class="btn btn-primary" style="display: block;">' . MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_ADMIN_TEXT . '</button>';
 				}
 				$output .=  zen_draw_form('nn_instalment_cancel', 'novalnet_extension_helper.php');
 				$output .= '<div id= novalnet_instalment_cancel style="display: none;">' ;
 				$output .= zen_draw_hidden_field('oID', $request['oID']);
-				$output .= zen_draw_input_field('nn_instacancel_allcycles',html_entity_decode(MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_ALLCYCLES), 'id="nn_instacancel_allcycles" class="btn btn-primary"',false,'submit')."&nbsp;";
-				$output .= zen_draw_input_field('nn_instacancel_remaincycles',html_entity_decode(MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_REMAINING_CYCLES), 'id="nn_instacancel_remaincycles" class="btn btn-primary"',false,'submit');
+				$output .= zen_draw_input_field('nn_instacancel_remaincycles',html_entity_decode(MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_REMAINING_CYCLES), 'id="nn_instacancel_remaincycles" class="btn btn-primary" '.$nn_instacancel_remaining,false,'submit')."&nbsp;";
+				$output .= zen_draw_input_field('nn_instacancel_allcycles',html_entity_decode(MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_ALLCYCLES), 'id="nn_instacancel_allcycles" class="btn btn-primary" '.$nn_instacancel_allcycles,false,'submit');
 				$output .= '</div></form></td><td></td></tr>';
 				$output .= '<tr class="dataTableHeadingRow"><td class="dataTableContent">S.No</td><td class="dataTableContent">'.MODULE_PAYMENT_NOVALNET_INSTALMENT_AMOUNT_BACKEND.'</td><td class="dataTableContent">'.MODULE_PAYMENT_NOVALNET_INSTALMENT_PAID_DATE_BACKEND.'</td><td class="dataTableContent">'.MODULE_PAYMENT_NOVALNET_INSTALMENT_NEXT_DATE_BACKEND.'</td><td class="dataTableContent">'.MODULE_PAYMENT_NOVALNET_INSTALMENT_STATUS_BACKEND.'</td><td class="dataTableContent">'.MODULE_PAYMENT_NOVALNET_INSTALMENT_REFERENCE_BACKEND.'</td><td></td></tr>';
 				$nn_instalment_table = '';
+				$instalment_amount = 0;
+				$status = [];
 				$sno = 1;
 				foreach ($instalment_details as $key => $instalment_details_data) {
 						$instalment_amount = (strpos((string)$instalment_details_data['instalment_cycle_amount'], '.')) ? $instalment_details_data['instalment_cycle_amount']*100 : $instalment_details_data['instalment_cycle_amount'];
@@ -156,14 +157,14 @@ if (defined('MODULE_PAYMENT_NOVALNET_ENABLE_PAYMENT_METHOD') && MODULE_PAYMENT_N
 							$status = (empty($instalment_details_data['reference_tid'])) ? 'Pending' : (($instalment_amount > 0) ? 'Paid' : 'Refunded');
 						}
 						$status = constant('MODULE_PAYMENT_NOVALNET_INSTALMENT_STATUS_' .  strtoupper($status));
-						$href = ($instalment_details_data['reference_tid'] != '' && $instalment_amount != '0' && ($status == 'Paid')) ? "&nbsp;<button id='nn_refund1' class='btn btn-primary' onclick='myFunction($key)'>" . MODULE_PAYMENT_NOVALNET_REFUND_TEXT . "</button>" : '';
+						$href = (isset($instalment_details_data['reference_tid']) && $instalment_details_data['reference_tid'] != '' && $instalment_amount != '0' && $instalment_amount > 0) ? "&nbsp;<button id='nn_refund1' class='btn btn-primary' onclick='myFunction($key)'>" . MODULE_PAYMENT_NOVALNET_REFUND_TEXT . "</button>" : '';
 						$instalment_amount_formatted = !empty($instalment_amount) ? $currencies->format($instalment_amount/100, 1, $transaction_details->fields['currency']) : '-';
 						$nn_instalment_table .= "<tr class='dataTableRow'><td class='dataTableContent'>".$sno++."</td><td class='dataTableContent'>".$instalment_amount_formatted.' '.$href."</td>
-						<td class='dataTableContent'>".$instalment_details_data['paid_date']."</td><td class='dataTableContent'>".$instalment_details_data['next_instalment_date']."</td><td class='dataTableContent'>$status</td><td class='dataTableContent'>".$instalment_details_data['reference_tid']."</td>";
+						<td class='dataTableContent'>".(isset($instalment_details_data['paid_date']) ? $instalment_details_data['paid_date'] : '')."</td><td class='dataTableContent'>".(isset($instalment_details_data['next_instalment_date']) ? $instalment_details_data['next_instalment_date'] : '')."</td><td class='dataTableContent'>$status</td><td class='dataTableContent'>".(isset($instalment_details_data['reference_tid']) ? $instalment_details_data['reference_tid'] : '')."</td>";
 						$nn_instalment_table .= '<td class="dataTableContent">'.zen_draw_form('nn_refund_confirm', 'novalnet_extension_helper.php');
 						$nn_instalment_table .= '<div id= instalment_refund_'.$key.' style="display: none;">' ;
 						$nn_instalment_table .= zen_draw_hidden_field('oID', $request['oID']);
-						$nn_instalment_table .= zen_draw_hidden_field('refund_tid', $instalment_details_data['reference_tid']);
+						$nn_instalment_table .= zen_draw_hidden_field('refund_tid', (isset($instalment_details_data['reference_tid']) ? $instalment_details_data['reference_tid'] : ''));
 						$nn_instalment_table .= zen_draw_hidden_field('instalment_cycle', ''.$key.'');
 						$nn_instalment_table .= zen_draw_input_field('refund_trans_amount',$instalment_amount,'id="refund_trans_amount"  style="width:100px;margin:0 0 0 2%" autocomplete="off"')."&nbsp;";
 						$nn_instalment_table .= zen_draw_input_field('nn_refund_confirm',html_entity_decode(MODULE_PAYMENT_NOVALNET_CONFIRM_TEXT), 'class="btn btn-primary" onclick="return refund_amount_validation();" ',false,'submit')."&nbsp;" ;
@@ -185,4 +186,3 @@ echo zen_draw_hidden_field('nn_zero_amount_book_confirm', MODULE_PAYMENT_NOVALNE
 echo zen_draw_hidden_field('nn_amount_error', MODULE_PAYMENT_NOVALNET_AMOUNT_ERROR_MESSAGE);
 echo zen_draw_hidden_field('nn_insta_allcycles', MODULE_PAYMENT_NOVALNET_ALLCYCLES_ERROR_MESSAGE);
 echo zen_draw_hidden_field('nn_insta_remainingcycles', MODULE_PAYMENT_NOVALNET_REMAINING_CYCLES_ERROR_MESSAGE);
-?>

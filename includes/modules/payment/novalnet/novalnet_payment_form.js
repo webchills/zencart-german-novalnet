@@ -31,6 +31,7 @@ jQuery(document).ready(function () {
             }
         };
         jQuery('#pmt-novalnet_payments').hide();
+        jQuery('#pmt-novalnet_payments').prevUntil('input[type="radio"][name="payment"]').not('label').css({"display": "none"});
         var v13PaymentForm = new NovalnetPaymentForm();
     
         // initiate form
@@ -62,8 +63,12 @@ jQuery(document).ready(function () {
                 jQuery('#nn_selected_payment_data').val(JSON.stringify(data));
                 if (jQuery("input[id*='pmt-novalnet_payments']:checked") && (data['payment_details']['type'] == 'GOOGLEPAY' || data['payment_details']['type'] == 'APPLEPAY')) {
                     jQuery('.button_continue_checkout').hide();
+                    if(jQuery('#conditions').length)
+                    jQuery('#conditions').prop('checked', true);
                 } else {
                     jQuery('.button_continue_checkout').show();
+                    if(jQuery('#conditions').length)
+                    jQuery('#conditions').prop('checked', false);
                 }
             }
         )

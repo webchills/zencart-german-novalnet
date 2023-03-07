@@ -17,7 +17,6 @@ chdir('../');
 require('includes/application_top.php');
 include_once('includes/filenames.php');
 include_once(DIR_FS_CATALOG. 'includes/functions/functions_email.php');
-require_once(DIR_FS_CATALOG . DIR_WS_MODULES. 'payment/novalnet/NovalnetHelper.class.php');
 
 class NovalnetWebhooks {
 
@@ -215,7 +214,7 @@ class NovalnetWebhooks {
 			if (isset($this->event_data['transaction']['currency'])) {
 			  $token_string .= $this->event_data['transaction']['currency'];
 			}
-			if (!empty(MODULE_PAYMENT_NOVALNET_PAYMENT_ACCESS_KEY)) {
+			if (defined('MODULE_PAYMENT_NOVALNET_PAYMENT_ACCESS_KEY') && !empty(MODULE_PAYMENT_NOVALNET_PAYMENT_ACCESS_KEY)) {
 			  $token_string .= strrev(MODULE_PAYMENT_NOVALNET_PAYMENT_ACCESS_KEY);
 			}
 			$generated_checksum = hash('sha256', $token_string);
@@ -233,9 +232,9 @@ class NovalnetWebhooks {
 		if(empty($orderNumber)) {
 			$this->displayMessage(array( 'message' => 'Order reference not found in the shop' ));
 		}
-		$shop_order_details = $db->Execute("SELECT payment_method,orders_id, customers_id,orders_status,language_code FROM ".TABLE_ORDERS." WHERE orders_id = '".$orderNumber."'");
-		$this->order_lang = $db->Execute("SELECT * FROM " . TABLE_LANGUAGES . " WHERE directory = '" . $shop_order_details->fields['language_code'] ."'");
-		$this->include_required_files($this->order_lang->fields);
+		$shop_order_details = $db->Execute("SELECT order_total,orders_id, customers_id,orders_status, language_code FROM ".TABLE_ORDERS." WHERE orders_id = '".$orderNumber."'");
+		$this->order_lang = $db->Execute("SELECT directory FROM " . TABLE_LANGUAGES . " WHERE code = '" . $shop_order_details->fields['language_code'] ."'");
+		$this->include_required_files($this->order_lang->fields['directory']);
 
 		$order_details['nn_trans_details'] =  $novalnet_order_details->fields;
 		$order_details['shop_order'] =  $orderNumber;
@@ -274,7 +273,7 @@ class NovalnetWebhooks {
 								'iban' => $bank_data->iban,
 								'bic' => $bank_data->bic,
 								'bank_name' => $bank_data->bank_name,
-								'bank_place' => $bank_data->bank_city,
+								'bank_place' => $bank_data->bank_place,
 							);
 					} else {
 						$bank_details = json_decode($this->order_details['nn_trans_details']['payment_details'], true);
@@ -287,7 +286,9 @@ class NovalnetWebhooks {
 				$order_comment .= NovalnetHelper::getInstalmentDetails($this->event_data);
 			}
 			$this->updateOrderStatusHistory($this->event_data['transaction']['order_no'], $order_status, $order_comment);
-
+			if ( $this->event_data['transaction']['status'] == 'CONFIRMED' && in_array($this->event_data['transaction']['payment_type'], array( 'INSTALMENT_INVOICE','GUARANTEED_INVOICE'))) {
+				NovalnetHelper::sendPaymentConfirmationMail($order_comment, $this->event_data['transaction']['order_no']);
+			}
 			$this->updateNovalnetTransaction($novalnet_update_data, "tid='{$this->parent_tid}'");
 			$this->sendWebhookMail($comments);
 			$this->displayMessage([ 'message' => $comments]);
@@ -300,12 +301,14 @@ class NovalnetWebhooks {
 	 */
 	function handleTransactionCancel() {
 		if ($this->order_details['nn_trans_details']['status'] != $this->event_data['transaction']['status']) {
+			$order_status = '';
+			$order_status = NovalnetHelper::getOrderStatusId();
 			$comments = sprintf(MODULE_PAYMENT_NOVALNET_TRANS_DEACTIVATED_MESSAGE, gmdate('d-m-Y'), gmdate('H:i:s'));
 			$novalnet_update_data = [
 				'status' => $this->event_data['transaction']['status'],
 			];
 			$this->updateNovalnetTransaction($novalnet_update_data, "tid='{$this->parent_tid}'");
-			$this->updateOrderStatusHistory($this->event_data['transaction']['order_no'], '', $comments);
+			$this->updateOrderStatusHistory($this->event_data['transaction']['order_no'], $order_status, $comments);
 			$this->sendWebhookMail($comments);
 			$this->displayMessage([ 'message' => $comments]);
 		}
@@ -319,6 +322,7 @@ class NovalnetWebhooks {
 	function handleTransactionRefund() {
 		global $currencies;
 		if (!empty($this->event_data['transaction']['refund']['amount'])) {
+			$order_status_id = '';
 			$comments = PHP_EOL . sprintf(MODULE_PAYMENT_NOVALNET_REFUND_PARENT_TID_MSG, $this->parent_tid, $currencies->format(($this->event_data['transaction']['refund']['amount']/100), 1, $this->event_data['transaction']['currency']));
 			if (!empty($this->event_data['transaction']['refund']['tid'])) {
 				$comments .= sprintf(MODULE_PAYMENT_NOVALNET_REFUND_CHILD_TID_MSG, $this->event_data['transaction']['refund']['tid']);
@@ -333,7 +337,7 @@ class NovalnetWebhooks {
 				$instalment_details = (!empty($this->order_details['nn_trans_details']['instalment_cycle_details'])) ? json_decode($this->order_details['nn_trans_details']['instalment_cycle_details'], true) : unserialize($this->order_details['nn_trans_details']['payment_details']);
 				if(!empty($instalment_details)) {
 					foreach($instalment_details as $cycle => $cycle_details){
-						if(!empty($cycle_details['reference_tid']) && ($cycle_details['reference_tid'] == $this->parent_tid)) {
+						if(!empty($cycle_details['reference_tid']) && ($cycle_details['reference_tid'] == $this->event_data['transaction']['tid'])) {
 							$instalment_amount = (strpos((string)$instalment_details[$cycle]['instalment_cycle_amount'], '.')) ? $instalment_details[$cycle]['instalment_cycle_amount']*100 : $instalment_details[$cycle]['instalment_cycle_amount'];
 							$instalment_amount = $instalment_amount - $refund_amount;
 							$instalment_details[$cycle]['instalment_cycle_amount'] = $instalment_amount;
@@ -346,9 +350,11 @@ class NovalnetWebhooks {
 				}
 				$novalnet_update_data['instalment_cycle_details'] =json_encode($instalment_details);
 			}
-
+			if ($refunded_amount >= $this->order_details['nn_trans_details']['amount']) {
+				$order_status_id = NovalnetHelper::getOrderStatusId();
+			}
 			$this->updateNovalnetTransaction($novalnet_update_data, "tid='{$this->parent_tid}'");
-			$this->updateOrderStatusHistory($this->order_details['shop_order'], '', $comments);
+			$this->updateOrderStatusHistory($this->order_details['shop_order'], $order_status_id, $comments);
 			$this->sendWebhookMail($comments);
 			$this->displayMessage([ 'message' => $comments]);
 		}
@@ -436,7 +442,7 @@ class NovalnetWebhooks {
 			}
 			$comment = sprintf(NOVALNET_WEBHOOK_NEW_INSTALMENT_NOTE, $this->parent_tid, $currencies->format(($this->event_data['instalment']['cycle_amount']/100), 1, $this->event_data['transaction']['currency']), gmdate('d-m-Y'), $this->event_tid);
 			$this->updateNovalnetTransaction(array('instalment_cycle_details' => json_encode($instalment_details)), "tid='{$this->parent_tid}'");
-			$transaction_comment .= NovalnetHelper::insertTransactionDetails($this->event_data, false, $this->order_details['shop_order']);
+			$comment .= PHP_EOL. NovalnetHelper::insertTransactionDetails($this->event_data, false, $this->order_details['shop_order']);
 			$this->updateOrderStatusHistory($this->event_data['transaction']['order_no'], '', $comment, 1);
 			$this->sendWebhookMail($comment);
 			$this->displayMessage([ 'message' => $comment]);
@@ -448,15 +454,52 @@ class NovalnetWebhooks {
 	 *
 	 */
 	function handleInstalmentCancel() {
+		global $currencies;
 		$comments = '';
 		if ($this->event_data['transaction']['status'] == 'CONFIRMED') {
-			$novalnet_update_data = [
-				'status' => 'DEACTIVATED',
-			];
-			$comments .= sprintf(NOVALNET_WEBHOOK_INSTALMENT_CANCEL_NOTE, $this->parent_tid, gmdate('d.m.Y'));
+			$order_status = '';
+			$instalment_details = json_decode($this->order_details['nn_trans_details']['instalment_cycle_details'], true);
+				if (isset($this->event_data['instalment']['cancel_type']) && $this->event_data['instalment']['cancel_type'] != 'ALL_CYCLES') {
+					if(!empty($instalment_details)) {
+						foreach($instalment_details as $key => $instalment_details_data) {
+							if (empty($instalment_details_data['reference_tid']) && ($instalment_details_data['status'] == 'Pending'))	{
+								$instalment_details[$key]['status'] = 'Canceled';
+							}
+						}
+						$novalnet_update_data = [
+							'instalment_cycle_details' => json_encode($instalment_details),
+							'status' => 'DEACTIVATED',
+						];
+					}
+					$comments .= sprintf(MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_REMAINING_CYCLES_TEXT, $this->parent_tid, gmdate('d.m.Y'));
+				} else {
+					$order_status = NovalnetHelper::getOrderStatusId();
+					$refunded_amount = $this->order_details['nn_trans_details']['refund_amount'] + $this->event_data['transaction']['refund']['amount'];
+					if(!empty($instalment_details)) {
+						foreach($instalment_details as $cycle => $cycle_details) {
+							if (!empty($cycle_details['reference_tid']) && ($cycle_details['status'] == 'Paid')) {
+								$instalment_details[$cycle]['status'] = 'Refunded';
+							}
+							if ($cycle_details['status'] == 'Pending') {
+								$instalment_details[$cycle]['status'] = 'Canceled';
+							}
+							if(!empty($cycle_details['reference_tid']) && (($cycle_details['reference_tid'] == $this->parent_tid) || ($cycle_details['reference_tid'] != $this->parent_tid))) {
+								$instalment_amount = (strpos((string)$instalment_details[$cycle]['instalment_cycle_amount'], '.')) ? $instalment_details[$cycle]['instalment_cycle_amount']*100 : $instalment_details[$cycle]['instalment_cycle_amount'];
+								$instalment_amount = $instalment_amount - $this->event_data['transaction']['refund']['amount'];
+								$instalment_details[$cycle]['instalment_cycle_amount'] = $instalment_amount;
+							}
+						}
+						$novalnet_update_data = [
+							'instalment_cycle_details' => json_encode($instalment_details),
+							'status' => 'DEACTIVATED',
+							'refund_amount' => $refunded_amount,
+						];
+					}
+					$comments .= sprintf(MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_ALLCYCLES_TEXT, $this->parent_tid, gmdate('d.m.Y'), $currencies->format(($this->event_data['transaction']['refund']['amount']/100), 1, $this->event_data['transaction']['currency']));
+				}
 		}
 		$this->updateNovalnetTransaction($novalnet_update_data, "tid='{$this->parent_tid}'");
-		$this->updateOrderStatusHistory($this->event_data['transaction']['order_no'], '', $comments);
+		$this->updateOrderStatusHistory($this->event_data['transaction']['order_no'], $order_status, $comments);
 		$this->sendWebhookMail($comments);
 		$this->displayMessage(['message' => $comments]);
 	}
@@ -474,6 +517,7 @@ class NovalnetWebhooks {
 			$order_status = '';
 			if ($this->event_data['transaction']['status'] == 'DEACTIVATED') {
 				$transaction_comments = sprintf(MODULE_PAYMENT_NOVALNET_TRANS_DEACTIVATED_MESSAGE, gmdate('d.m.Y'), gmdate('H:i:s'));
+				$order_status = NovalnetHelper::getOrderStatusId();
 			} else { 
 				if (in_array($this->order_details['nn_trans_details']['status'], array('PENDING', 'ON_HOLD' ), true)) {
 					if (empty($this->event_data['instalment']['cycle_amount'])) {
@@ -555,6 +599,9 @@ class NovalnetWebhooks {
 					}
 				}
 			}
+			if ( in_array($this->event_data['transaction']['status'], array('CONFIRMED', 'ON_HOLD'))&& in_array($this->event_data['transaction']['payment_type'], array( 'INSTALMENT_INVOICE','GUARANTEED_INVOICE'))) {
+				NovalnetHelper::sendPaymentConfirmationMail($transaction_comments, $this->event_data['transaction']['order_no']);
+			}
 			$this->updateNovalnetTransaction($novalnet_update_data, "tid='{$this->parent_tid}'");
 			$this->updateOrderStatusHistory($this->order_details['shop_order'], $order_status, $transaction_comments);
 			$this->sendWebhookMail($comments);
@@ -605,10 +652,11 @@ class NovalnetWebhooks {
 	 * @param $customer_notified
 	 */
 	function updateOrderStatusHistory($order_id, $order_status_id = '', $comments = '', $customer_notified = 1) {
-		
+		global $db;
 		$datas_need_to_update = [];
 		if ($order_status_id == '') {
-			$order_status_id = $this->order_details['shop_order_details']['orders_status'];
+			$current_order_status = $db->Execute("SELECT orders_status from " . TABLE_ORDERS . " where orders_id = " . $order_id);
+			$order_status_id = $current_order_status->fields['orders_status'];
 		}
 		$datas_need_to_update['orders_status'] = $order_status_id;
 		zen_db_perform(TABLE_ORDERS, $datas_need_to_update, "update", "orders_id='$order_id'");
@@ -655,15 +703,13 @@ class NovalnetWebhooks {
 	/**
 	 * Include language file and helper file.
 	 */
-	function include_required_files($lang_data) {
+	function include_required_files($lang) {
 		// include language
-		require_once (DIR_WS_CLASSES.'language.php');
-		$lang = new language($lang_data['code']);
-		include_once(DIR_FS_CATALOG . DIR_WS_LANGUAGES. $lang->language['directory']."/modules/payment/novalnet_payments.php");
+		include_once(DIR_FS_CATALOG . DIR_WS_LANGUAGES. $lang."/modules/payment/novalnet_payments.php");
+
 		// include helper file after language files.
 		require_once(DIR_FS_CATALOG . DIR_WS_MODULES. 'payment/novalnet/NovalnetHelper.class.php');
 		return;
 	}
 }
 new NovalnetWebhooks();
-?>

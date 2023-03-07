@@ -107,11 +107,12 @@ class novalnet_payments extends base {
 			$custom_data       = NovalnetHelper::getCustomData();
 			$hosted_page_data  = NovalnetHelper::getHostedPageData();
 			$params = array_merge($merchant_data, $customer_data, $transaction_data, $custom_data, $hosted_page_data);
-			$params['transaction']['system_version'] = PROJECT_VERSION_MAJOR . '.' . PROJECT_VERSION_MINOR.'-NN13.0.0-NNT'.$theme->fields['template_dir'];
+			$params['transaction']['system_version'] = PROJECT_VERSION_MAJOR . '.' . PROJECT_VERSION_MINOR.'-NN13.0.1-NNT'.$theme->fields['template_dir'];
 			$response = NovalnetHelper::sendRequest($params, 'https://payport.novalnet.de/v2/seamless/payment');
 			if ($response['result']['status'] == 'SUCCESS') {
 				$selection = [
 					'id'          => $this->code,
+					'module'      => ''
 				];
 				$selection['fields'][] = ['field' => '
 								<iframe  style = "width:100%;border: 0;" id = "v13PaymentForm" src = "' . $response['result']['redirect_url'] . '" allow = "payment"></iframe>
@@ -158,7 +159,15 @@ class novalnet_payments extends base {
 		return false;
 
 	}
+	
+	/**
+	 * Core Function : process_button()
+	 *
+	 */
+	function process_button() {
+		return false;
 
+	}
 	/**
 	 * Core Function : before_process()
 	 *
@@ -184,7 +193,7 @@ class novalnet_payments extends base {
 			$custom_data       = NovalnetHelper::getCustomData();
 			$transaction_data  = NovalnetHelper::getTransactionData();
 			$params = array_merge($merchant_data, $customer_data, $transaction_data, $custom_data);
-			if ($_SESSION['nn_payment_details']->process_mode == 'redirect') { // For redirection payments
+			if (isset($_SESSION['nn_payment_details']->process_mode) && $_SESSION['nn_payment_details']->process_mode == 'redirect') { // For redirection payments
 				$response = NovalnetHelper::getRedirectData($params);				
 				if ($response['result']['status'] == 'SUCCESS' && !empty($response['result']['redirect_url'])) { // Success
 					$_SESSION['nn_txn_secret'] = $response['transaction']['txn_secret'];
@@ -192,27 +201,27 @@ class novalnet_payments extends base {
 				} else { // Failure
 					NovalnetHelper::processTempOrderFail($response);
 				}
-			} else if ($_SESSION['nn_payment_details']->process_mode == 'direct') {
-				if (in_array($_SESSION['nn_payment_details']->type, array('CREDITCARD', 'DIRECT_DEBIT_SEPA', 'GUARANTEED_DIRECT_DEBIT_SEPA','INSTALMENT_DIRECT_DEBIT_SEPA'))) {
+			} else if (isset($_SESSION['nn_payment_details']->process_mode) && $_SESSION['nn_payment_details']->process_mode == 'direct') {
+				if (isset($_SESSION['nn_payment_details']->type) && in_array($_SESSION['nn_payment_details']->type, array('CREDITCARD', 'DIRECT_DEBIT_SEPA', 'GUARANTEED_DIRECT_DEBIT_SEPA','INSTALMENT_DIRECT_DEBIT_SEPA'))) {
 					$params['transaction'] = array_merge(NovalnetHelper::getTransactionData()['transaction'], NovalnetHelper::getAccountDetails()['transaction']);
-					if ($_SESSION['nn_booking_details']->create_token == '1' || !empty($_SESSION['nn_booking_details']->payment_ref->token))
-					NovalnetHelper::getToeknizationDetails($params);
 				}
-				if ($_SESSION['nn_payment_details']->type == 'GOOGLEPAY' || $_SESSION['nn_payment_details']->type == 'APPLEPAY') {
+				if (isset($_SESSION['nn_payment_details']->type) && ($_SESSION['nn_payment_details']->type == 'GOOGLEPAY' || $_SESSION['nn_payment_details']->type == 'APPLEPAY')) {
+					if (isset($_SESSION['nn_booking_details']->wallet_token))
 					$params['transaction']['payment_data']['wallet_token'] = $_SESSION['nn_booking_details']->wallet_token;
 				}
 				$params['transaction']['payment_type'] = $_SESSION['nn_payment_details']->type;
 				$params['transaction']['test_mode'] = $_SESSION['nn_booking_details']->test_mode;
 				if (in_array($_SESSION['nn_payment_details']->type, array('INSTALMENT_DIRECT_DEBIT_SEPA','INSTALMENT_INVOICE'))) {
+					if (isset($_SESSION['nn_booking_details']->cycle))
 					$params['instalment'] = [
 						'interval' => '1m',
 						'cycles'    => $_SESSION['nn_booking_details']->cycle,
 					];
 				}
-				if ($_SESSION['nn_booking_details']->payment_action == 'authorized') {
+				if (isset($_SESSION['nn_booking_details']->payment_action) && $_SESSION['nn_booking_details']->payment_action == 'authorized') {
 					$response = NovalnetHelper::sendRequest($params, NovalnetHelper::getActionEndpoint('authorize'));
 				} else {
-					if ($_SESSION['nn_booking_details']->payment_action == 'zero_amount') {
+					if (isset($_SESSION['nn_booking_details']->payment_action) && $_SESSION['nn_booking_details']->payment_action == 'zero_amount') {
 						$params['transaction']['amount'] = 0;
 						$params['transaction']['create_token'] = 1;
 					}
@@ -266,6 +275,7 @@ class novalnet_payments extends base {
 	public function remove() {
 		global $db;
 		$db->Execute("DELETE FROM " . TABLE_CONFIGURATION . " WHERE configuration_key LIKE 'MODULE\_PAYMENT\_NOVALNET\_%'");		
+		$db->Execute("DELETE FROM ".TABLE_ORDERS_STATUS." WHERE orders_status_name LIKE '%Novalnet%'");
 	}
 
 	/**
@@ -310,26 +320,46 @@ class novalnet_payments extends base {
 	/**
      * Create the Novalnet pending status
      *
-     * @return int
+     * @return boolean
      */
     function createNovalnetOrderStatus() {
 		global $db;
-		$languages = $db->Execute("select * from " . TABLE_LANGUAGES . " order by sort_order");
-		$query = $db->Execute("select max(orders_status_id) as status_id from " . TABLE_ORDERS_STATUS);
-		if ($query->RecordCount())
-			$status_id = $query->fields['status_id'];
-		if ($languages->RecordCount())
-			if(file_exists(DIR_FS_CATALOG. DIR_WS_LANGUAGES .$languages->fields['directory'].'/modules/payment/novalnet_payments.php')) {
-				include_once(DIR_FS_CATALOG. DIR_WS_LANGUAGES .$languages->fields['directory'].'/modules/payment/novalnet_payments.php');
+		$languages = zen_get_languages();
+		foreach ($languages as $key => $value) {
+			if(file_exists(DIR_FS_CATALOG. DIR_WS_LANGUAGES .$value['directory'].'/modules/payment/novalnet_payments.php')) {
+				include_once(DIR_FS_CATALOG. DIR_WS_LANGUAGES .$value['directory'].'/modules/payment/novalnet_payments.php');
+			}			
+			$canceled_status = $db->Execute("select orders_status_name from ". TABLE_ORDERS_STATUS ." WHERE orders_status_name LIKE '%cancel%'");
+			
+			if($value['code'] == 'de') {	// For german text
+				$nn_cancelled_status = $db->Execute("SELECT * FROM " . TABLE_ORDERS_STATUS . " WHERE language_id = '".$value['id']."' AND orders_status_name = '".MODULE_PAYMENT_NOVALNET_CANCELED_DE_ORDER_STATUS."'");	
+				$nn_onhold_status = $db->Execute("SELECT * FROM " . TABLE_ORDERS_STATUS . " WHERE language_id = '".$value['id']."' AND orders_status_name = '".MODULE_PAYMENT_NOVALNET_ONHOLD_DE_ORDER_STATUS."'");
+				if (empty($canceled_status->RecordCount()) && empty($nn_cancelled_status->RecordCount())) {		// For cancelled status
+					$db->Execute("insert into " . TABLE_ORDERS_STATUS . " (orders_status_id, language_id, orders_status_name, sort_order) values ('98', '".$value['id']."', '" . MODULE_PAYMENT_NOVALNET_CANCELED_DE_ORDER_STATUS . "', '0')");
+				} 
+				if (empty($nn_onhold_status->RecordCount())) {			// For authorised status
+					$db->Execute("insert into " . TABLE_ORDERS_STATUS . " (orders_status_id, language_id, orders_status_name, sort_order) values ('99', '".$value['id']."', '" . MODULE_PAYMENT_NOVALNET_ONHOLD_DE_ORDER_STATUS . "', '0')");
+				}
+			} else if ($value['code'] == 'en') {	// For enflish text
+				$nn_cancelled_status = $db->Execute("SELECT * FROM " . TABLE_ORDERS_STATUS . " WHERE language_id = '".$value['id']."' AND orders_status_name = '".MODULE_PAYMENT_NOVALNET_CANCELED_EN_ORDER_STATUS."'");
+				$nn_onhold_status = $db->Execute("SELECT * FROM " . TABLE_ORDERS_STATUS . " WHERE language_id = '".$value['id']."' AND orders_status_name = '".MODULE_PAYMENT_NOVALNET_ONHOLD_EN_ORDER_STATUS."'");
+				if (empty($canceled_status->RecordCount()) && $nn_cancelled_status->RecordCount()) {		// For cancelled status
+					$db->Execute("insert into " . TABLE_ORDERS_STATUS . " (orders_status_id, language_id, orders_status_name, sort_order) values ('98', '".$value['id']."', '" . MODULE_PAYMENT_NOVALNET_CANCELED_EN_ORDER_STATUS . "', '0')");
+				}
+				if (empty($nn_onhold_status->RecordCount())) {			// For authorised status
+					$db->Execute("insert into " . TABLE_ORDERS_STATUS . " (orders_status_id, language_id, orders_status_name, sort_order) values ('99', '".$value['id']."', '" . MODULE_PAYMENT_NOVALNET_ONHOLD_EN_ORDER_STATUS . "', '0')");				
+				}
 			}
-			$novalnet_onhold_status_text = 'Payment authorized in Novalnet';
-			$status = $db->Execute("SELECT orders_status_id FROM " . TABLE_ORDERS_STATUS . " WHERE orders_status_name = '" . $novalnet_onhold_status_text . "'");
-			if (empty($status->RecordCount())) {
-				$db->Execute("insert into " . TABLE_ORDERS_STATUS . " (orders_status_id, language_id, orders_status_name, sort_order) values ('99', '1', '" . $novalnet_onhold_status_text . "', '0')");
-			}
-			return true;
+		}
+		return true;
 	}
-
+	
+	/**
+    * Build admin-page components
+    *
+    * @param int $order_id
+    * @return string
+    */
 	function admin_notification($order_id) {
 		$output = '';
 		require(DIR_FS_CATALOG . DIR_WS_MODULES . 'payment/novalnet/novalnet_extension.php');

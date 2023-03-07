@@ -66,29 +66,12 @@ function refund_amount_validation() {
 	}
 }
 
-function handle_refund(cycle) {
-	var refund_id = document.getElementById('instalment_refund_'+cycle);
-	if (refund_id.style.display == "none") {
-		refund_id.style.display = "block";
-	} else {
-		refund_id.style.display = "none";
-	}
-}
-
-function handle_refund(cycle) {
-	var refund_id = document.getElementById('instalment_refund_'+cycle);
-	if (refund_id.style.display == "none") {
-		refund_id.style.display = "block";
-	} else {
-		refund_id.style.display = "none";
-	}
-}
 
 $(document).on('click', '#nn_instacancel_allcycles, #nn_instacancel_remaincycles, #nn_instalment_cancel', function (event) {
 	var instalment_id = document.getElementById("novalnet_instalment_cancel");
 	var instalment_cancel_id = document.getElementById("nn_instalment_cancel");
 	if (instalment_id.style.display === "none") {
-		instalment_id.style.display = "block";
+		instalment_id.style.display = "inline-flex";
 		instalment_cancel_id.style.display= "none";
 	} else {
 		instalment_id.style.display = "none";

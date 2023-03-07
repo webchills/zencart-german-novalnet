@@ -42,12 +42,13 @@ if ($txn_details->RecordCount()) {
 		];
 		$endpoint = (!empty($request['trans_status']) && $request['trans_status'] == 'CONFIRM') ? 'transaction_capture' : 'transaction_cancel';
 		$response = NovalnetHelper::sendRequest($data, NovalnetHelper::getActionEndpoint($endpoint));
+		if (isset($response['transaction']['status']))
 		$update_data = [
 			'status' => $response['transaction']['status'],
 		];
 		if ($response['result']['status'] == 'SUCCESS') { // Success
 		$order_status = NovalnetHelper::getOrderStatus ($update_data['status'], $response['transaction']['payment_type']);
-		$order_status = ($request['trans_status'] == 'CONFIRM') ? $order_status : 99;
+		$order_status = ($request['trans_status'] == 'CONFIRM') ? $order_status : NovalnetHelper::getOrderStatusId();
 			if ($request['trans_status'] == 'CONFIRM') {
 				$comments .= PHP_EOL . sprintf(MODULE_PAYMENT_NOVALNET_TRANS_CONFIRM_SUCCESSFUL_MESSAGE_TEXT, date('d.m.Y', strtotime(date('d.m.Y'))), date('H:i:s')) . PHP_EOL;
 				$comments .= NovalnetHelper::getTransactionDetails($response);
@@ -64,6 +65,9 @@ if ($txn_details->RecordCount()) {
 						$instalment_details = NovalnetHelper::storeInstalmentdetails($response, $total_amount);
 						$update_data['instalment_cycle_details'] = $instalment_details;
 					}
+				}
+				if (in_array($response['transaction']['payment_type'], array('INSTALMENT_INVOICE','GUARANTEED_INVOICE'))) {
+					NovalnetHelper::sendPaymentConfirmationMail($comments, $request['oID']);
 				}
 			} elseif ($request['trans_status'] == 'CANCEL') {
 				$comments .= PHP_EOL.sprintf(MODULE_PAYMENT_NOVALNET_TRANS_DEACTIVATED_MESSAGE, date('d.m.Y', strtotime(date('d.m.Y'))), date('H:i:s'));
@@ -116,7 +120,9 @@ if ($txn_details->RecordCount()) {
 			if (!empty($request['oID'])) {
 				zen_db_perform('novalnet_transaction_detail', $update_data, 'update', 'order_no='.$request['oID']);
 			}
-			updateOrderStatus($request['oID'], $message, $current_order_status->fields['orders_status']);
+			$order_status_value = ($update_data['refund_amount'] >= $txn_details->fields['amount']) ? NovalnetHelper::getOrderStatusId() : $current_order_status->fields['orders_status'];
+
+			updateOrderStatus($request['oID'], $message, $order_status_value);
 			$messageStack->add_session($response['result']['status_text'], 'success');
 		} else {
 			$messageStack->add_session($response['result']['status_text'], 'error');
@@ -127,10 +133,6 @@ if ($txn_details->RecordCount()) {
 		$customer_data    = NovalnetHelper::getCustomerData();
 		$transaction_data = NovalnetHelper::getTransactionData();
 		$custom_data	  = NovalnetHelper::getCustomData();
-		$customer_data['customer']['billing']['country_code'] = $order->billing['country']['iso_code_2'];
-		if (empty($customer_data['customer']['shipping']['same_as_billing'])) {
-			$customer_data['customer']['shipping']['country_code'] = $order->delivery['country']['iso_code_2'];
-		}  
 		$transaction_data['transaction']['payment_type'] = $txn_details->fields['payment_type'];
 		$data = array_merge($merchant_data, $customer_data, $transaction_data, $custom_data);
 		$data['transaction']['amount'] = $request['book_amount'];
@@ -167,42 +169,48 @@ if ($txn_details->RecordCount()) {
 			if (!empty($request['nn_instacancel_remaincycles'])) {
 				$instalment_details = json_decode($txn_details->fields['instalment_cycle_details'], true);
 				if(!empty($instalment_details)) {
-					foreach($instalment_details as $key => $instalment_details_data) {						
-						if (empty($instalment_details_data['reference_tid']) && ($instalment_details_data['status'] == 'Pending'))	{					
-							$instalment_details[$key]['status'] = constant('MODULE_PAYMENT_NOVALNET_INSTALMENT_STATUS_CANCELED');
+					foreach($instalment_details as $key => $instalment_details_data) {
+						if (empty($instalment_details_data['reference_tid']) && ($instalment_details_data['status'] == 'Pending'))	{
+							$instalment_details[$key]['status'] = 'Canceled';
 						}
-						if ($instalment_details_data['status'] == 'Paid') {
-							$instalment_details[$key]['status'] = constant('MODULE_PAYMENT_NOVALNET_INSTALMENT_STATUS_REFUNDED');
-						}						
 					}
 					$update_data = [
 						'instalment_cycle_details' => json_encode($instalment_details),
-					];				
+					];
 				}
 				$update_data['status'] = 'CONFIRMED';
-				$message = PHP_EOL. sprintf((MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_REMAINING_CYCLES_TEXT), $txn_details->fields['tid'], date('Y-m-d H:i:s')); 
+				$message = PHP_EOL. sprintf((MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_REMAINING_CYCLES_TEXT), $txn_details->fields['tid'], date('Y-m-d H:i:s'));
 			} else if (!empty($request['nn_instacancel_allcycles'])) {
 				$instalment_details = json_decode($txn_details->fields['instalment_cycle_details'], true);
 				if(!empty($instalment_details)) {
-					foreach($instalment_details as $key => $instalment_details_data) {						
-						if (!empty($instalment_details_data['reference_tid']) && ($instalment_details_data['status'] == 'Paid'))	{					
-							$instalment_details[$key]['status'] = constant('MODULE_PAYMENT_NOVALNET_INSTALMENT_STATUS_REFUNDED');
-						} else {
-							$instalment_details[$key]['status'] = constant('MODULE_PAYMENT_NOVALNET_INSTALMENT_STATUS_CANCELED');
+					foreach($instalment_details as $cycle => $cycle_details) {
+						$refunded_amount = $response['transaction']['refund']['amount'];
+						if (!empty($cycle_details['reference_tid']) && ($cycle_details['status'] == 'Paid'))	{
+							$instalment_details[$cycle]['status'] = 'Refunded';
+						}
+						if ($cycle_details['status'] == 'Pending') {
+							$instalment_details[$cycle]['status'] = 'Canceled';
+						}
+						if(!empty($cycle_details['reference_tid']) && (($cycle_details['reference_tid'] == $txn_details->fields['tid']) || ($cycle_details['reference_tid'] != $txn_details->fields['tid']))) {
+							$instalment_amount = (strpos((string)$instalment_details[$cycle]['instalment_cycle_amount'], '.')) ? $instalment_details[$cycle]['instalment_cycle_amount']*100 :$instalment_details[$cycle]['instalment_cycle_amount'];
+							$instalment_amount = $instalment_amount - $refunded_amount;
+							$instalment_details[$cycle]['instalment_cycle_amount'] = $instalment_amount;
 						}
 					}
 					$update_data = [
 						'instalment_cycle_details' => json_encode($instalment_details),
-					];					
+						'refund_amount' => (!empty($txn_details->fields['refund_amount'])) ? ($refunded_amount + $txn_details->fields['refund_amount']) : $refunded_amount,
+					];
 				}
-				$update_data['status'] = 'CANCELED';
-				$message = PHP_EOL. sprintf((MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_ALLCYCLES_TEXT), $txn_details->fields['tid'], date('Y-m-d H:i:s'), $currencies->format(($response['transaction']['refund']['amount']/100), 1, $txn_details->fields['currency'])); 			
-			}		
-		
+				$update_data['status'] = 'DEACTIVATED';
+				$message = PHP_EOL. sprintf((MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_ALLCYCLES_TEXT), $txn_details->fields['tid'], date('Y-m-d H:i:s'), $currencies->format(($response['transaction']['refund']['amount']/100), 1, $txn_details->fields['currency']));
+			}
+
 			if (!empty($request['oID'])) {
 				zen_db_perform('novalnet_transaction_detail', $update_data, 'update', 'order_no='.$request['oID']);
 			}
-			updateOrderStatus($request['oID'], $message, $current_order_status->fields['orders_status']);
+			$order_status = !empty($request['nn_instacancel_allcycles']) ? NovalnetHelper::getOrderStatusId() : $current_order_status->fields['orders_status'];
+			updateOrderStatus($request['oID'], $message, $order_status);
 			$messageStack->add_session($response['result']['status_text'], 'success');
 		} else {
 			$messageStack->add_session($response['result']['status_text'], 'error');
@@ -225,7 +233,6 @@ function updateOrderStatus($order_id, $message, $order_status = '') {
 	zen_db_perform(TABLE_ORDERS, array(
 		'orders_status' => $order_status,
 	), "update", "orders_id='$order_id'");
-	
+
 	$db->Execute("insert into " . TABLE_ORDERS_STATUS_HISTORY . " (orders_id, orders_status_id, date_added, customer_notified, comments) values ('".zen_db_input($order_id)."', '".zen_db_input($order_status)."', '" .date('Y-m-d H:i:s') . "', '1', '".zen_db_input($message)."')");
 }
-?>

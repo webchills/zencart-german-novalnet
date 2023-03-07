@@ -39,9 +39,12 @@ $( document ).ready(function() {
 		var webhook_url = jQuery.trim(jQuery('#novalnet_webhook_url').val());
 		var regex       = /(http|https):\/\/(\w+:{0,1}\w*)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%!\-\/]))?/;
 		if (webhook_url != '' && regex.test(webhook_url)) {
-			confirm(jQuery('#nn_webhook_alert').val());
-			configure_webhook();
-			return true;
+			if (confirm(jQuery('#nn_webhook_alert').val())) {
+				configure_webhook();
+				return true;
+			} else {
+				return false;
+			}
 		} else if (!regex.test( webhook_url) || webhook_url === '' || webhook_url === undefined){
 			alert(jQuery('#nn_webhook_error').val());
 			return false;
