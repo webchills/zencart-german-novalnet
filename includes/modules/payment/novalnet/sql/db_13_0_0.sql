@@ -12,7 +12,7 @@
  */
 CREATE TABLE IF NOT EXISTS novalnet_transaction_detail (
   id int(10) unsigned AUTO_INCREMENT COMMENT 'Auto increment',
-  order_no int(10) unsigned COMMENT 'Order no from shop',
+  order_no int unsigned COMMENT 'Order no from shop',
   tid bigint(20) unsigned COMMENT 'Transaction id',
   amount int(10) unsigned COMMENT 'Amount', 
   currency char(10) COMMENT 'Currency', 

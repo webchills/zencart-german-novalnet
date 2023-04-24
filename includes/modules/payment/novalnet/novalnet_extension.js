@@ -12,75 +12,90 @@
  *
  */
 
-document.addEventListener("DOMContentLoaded", function() {
-    var elements = document.getElementsByClassName("refundBtns");
-	var myFunction = function() {
-	    var cycle = this.getAttribute("data-instalment");
-	    var refund_id = document.getElementById('instalment_refund_'+cycle);
-		if (refund_id.style.display == "none") {
-			refund_id.style.display = "block";
-		} else {
-			refund_id.style.display = "none";
-		}
-	};
-	for (var i = 0; i < elements.length; i++) {
-	    elements[i].addEventListener('click', myFunction, false);
-	}
+jQuery(document).ready(function () {
+    let elements = jQuery(".refundBtns"),
+        nn_instalment_refund_function = function () {
+            let cycle = this.getAttribute("data-instalment"),
+                refund_id = jQuery('#instalment_refund_'+ cycle);
+
+            if (refund_id.style.display == "none") {
+                refund_id.style.display = "block";
+            } else {
+                refund_id.style.display = "none";
+            }
+        };
+
+    for (let i = 0; i < elements.length; i++) {
+        elements[i].addEventListener('click', nn_instalment_refund_function, false);
+    }
+
+    $(document).on('click', '#nn_instacancel_allcycles, #nn_instacancel_remaincycles, #nn_instalment_cancel', function (event) {
+        if ($("#novalnet_instalment_cancel").css({"display": "none"})) {
+            $("#novalnet_instalment_cancel").css({"display": "inline-flex"});
+            $("#nn_instalment_cancel").css({"display": "none"});
+        } else {
+            $("#novalnet_instalment_cancel").css({"display": "none"});
+            $("#nn_instalment_cancel").css({"display": "block"});
+        }
+        if (this.id == 'nn_instacancel_allcycles') {
+            alert($("input[name='nn_insta_allcycles']").val());
+        } else if (this.id == 'nn_instacancel_remaincycles') {
+            alert($("input[name='nn_insta_remainingcycles']").val());
+        }
+    });
 });
 
-function void_capture_status() {
-	if (document.getElementById('trans_status').value == '') {
-		document.getElementById('nn_void_capture_error').innerHTML=document.getElementsByName("nn_select_status")[0].value;
-		return false;
-	}
-	display_status =  document.getElementById("trans_status").value == 'CONFIRM' ? document.getElementsByName("nn_capture_update")[0].value : document.getElementsByName("nn_void_update")[0].value;
-	if (!confirm(display_status)) {
-		return false;
-	}
-	return true;
+function void_capture_status()
+{
+    if (jQuery('#trans_status').val() == '') {
+        jQuery('#nn_void_capture_error').html(jQuery("[name=nn_select_status]").val());
+        return false;
+    }
+
+    let display_status = jQuery("#trans_status").val() == 'CONFIRM' ? jQuery("[name=nn_capture_update]").val() : jQuery("[name=nn_void_update]").val();
+
+    if (!confirm(display_status)) {
+        return false;
+    }
+
+    let url = jQuery('#novalnet_status_change').attr('action');
+
+    if (jQuery("#trans_status").val() == 'CONFIRM') {
+        jQuery('#novalnet_status_change').attr('action', url + '&action=doCapture');
+    } else {
+        jQuery('#novalnet_status_change').attr('action', url + '&action=doVoid');
+    }
+
+    return true;
 }
 
-function remove_void_capture_error_message() {
-	document.getElementById('nn_void_capture_error').innerHTML='';
+function refund_amount_validation()
+{
+    if (jQuery('#refund_tid') != null) {
+        let refund_ref = $('#refund_tid').val();
+        refund_ref = jQuery.trim(refund_ref);
+        let re = /[\/\\#,+!^()$~%.":*?<>{}]/g;
+
+        if (re.test(refund_ref)) {
+            jQuery('#nn_refund_error').html(jQuery("[name=nn_valid_account]").val());
+            return false;
+        }
+    } else {
+        let amount = jQuery('#refund_trans_amount').val();
+
+        if (amount.trim() == '' || amount == 0 || isNaN(amount)) {
+            jQuery('#nn_refund_error').html(jQuery("[name=nn_amount_error]").val());
+            return false;
+        }
+    }
+    if (jQuery('#refund_trans_amount').val() != null) {
+        if (!confirm(jQuery("[name=nn_refund_amount_confirm]").val())) {
+            return false;
+        }
+    }
+    if (jQuery('#book_amount').val() != null) {
+        if (!confirm(jQuery("[name=nn_zero_amount_book_confirm]").val())) {
+            return false;
+        }
+    }
 }
-
-function refund_amount_validation() {
-	if (document.getElementById('refund_tid') != null) {
-		var refund_ref = document.getElementById('refund_tid').value;
-		refund_ref = refund_ref.trim();
-		var re = /[\/\\#,+!^()$~%.":*?<>{}]/g;
-		if (re.test(refund_ref)) {
-			document.getElementById('nn_refund_error').innerHTML=document.getElementsByName("nn_valid_account")[0].value;
-			return false;
-		}
-	}
-	else { 
-		var amount = document.getElementById('refund_trans_amount').value;
-		if (amount.trim() == '' || amount == 0 || isNaN(amount)) {
-			document.getElementById('nn_refund_error').innerHTML= document.getElementsByName("nn_amount_error")[0].value;
-			return false;
-		}
-	}
-	if (!confirm(document.getElementsByName("nn_refund_amount_confirm")[0].value)) {
-		return false;
-	}
-}
-
-
-$(document).on('click', '#nn_instacancel_allcycles, #nn_instacancel_remaincycles, #nn_instalment_cancel', function (event) {
-	var instalment_id = document.getElementById("novalnet_instalment_cancel");
-	var instalment_cancel_id = document.getElementById("nn_instalment_cancel");
-	if (instalment_id.style.display === "none") {
-		instalment_id.style.display = "inline-flex";
-		instalment_cancel_id.style.display= "none";
-	} else {
-		instalment_id.style.display = "none";
-		instalment_cancel_id.style.display= "block";
-	}
-	if (this.id == 'nn_instacancel_allcycles'){
-		alert(document.getElementsByName("nn_insta_allcycles")[0].value);
-	} else if (this.id == 'nn_instacancel_remaincycles') {
-		alert(document.getElementsByName("nn_insta_remainingcycles")[0].value);
-	}
-	
-	 });

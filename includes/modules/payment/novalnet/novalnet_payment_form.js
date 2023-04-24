@@ -10,81 +10,97 @@
  * Script : novalnet_payment_form.js
  *
  */
-jQuery(document).ready(function () {	    
-	    var order_info = JSON.parse(jQuery("#nn_article_details").val());    
-	        
-	    Object.values(order_info).forEach((item) => {
-			item['label'] = item['label'].replace('#single_quote', "'");;
-		})
-	    
-        const paymentFormRequestObj = {
-            iframe: '#v13PaymentForm',
-            initForm : {
-                orderInformation : {
-                        lineItems: order_info,
-                        billing: {
-                            requiredFields: ["postalAddress", "phone", "email"]
-                        },
-                },
-                uncheckPayments: true,
-                showButton : false
-            }
-        };
-        jQuery('#pmt-novalnet_payments').hide();
-        jQuery('#pmt-novalnet_payments').prevUntil('input[type="radio"][name="payment"]').not('label').css({"display": "none"});
-        var v13PaymentForm = new NovalnetPaymentForm();
-    
-        // initiate form
-        v13PaymentForm.initiate(paymentFormRequestObj);         $(document).on('click', 'input[name="payment"]', function (event) {
-            if (this.checked) {
-                v13PaymentForm.uncheckPayment();
-            }
-         });
-        // receive wallet payment Response like gpay and applepay
-        v13PaymentForm.walletResponse({
-            onProcessCompletion: function (response){				
-                if (response.result.status == 'SUCCESS') {
-                    jQuery('#nn_payment_details').val(JSON.stringify(response));                  
-                    var submitEl = jQuery("div #paymentSubmit :submit");
-                    jQuery(submitEl).click();  
-                    return {status: 'SUCCESS', statusText: 'successfull'};                                               
-                } else {
-                    return {status: 'FAILURE', statusText: 'failure'};
-                }
-            }
-        });        // receive form validation response
-        v13PaymentForm.validationResponse(function (data) {
-        });        // receive form selected payment action
-        v13PaymentForm.selectedPayment(
-            (data)=>{
-                jQuery('#nn_payment_details').val(null);
-                jQuery('#pmt-novalnet_payments').prop('checked', true);
-                jQuery('#pmt-novalnet_payments').hide();
-                jQuery('#nn_selected_payment_data').val(JSON.stringify(data));
-                if (jQuery("input[id*='pmt-novalnet_payments']:checked") && (data['payment_details']['type'] == 'GOOGLEPAY' || data['payment_details']['type'] == 'APPLEPAY')) {
-                    jQuery('.button_continue_checkout').hide();
-                    if(jQuery('#conditions').length)
-                    jQuery('#conditions').prop('checked', true);
-                } else {
-                    jQuery('.button_continue_checkout').show();
-                    if(jQuery('#conditions').length)
-                    jQuery('#conditions').prop('checked', false);
-                }
-            }
-        )
+jQuery(document).ready(function () {
+    let order_info = JSON.parse(jQuery("#nn_article_details").val());
+    const novalnetPaymentIframe = new NovalnetPaymentForm();
 
-        // Get the postmessage data
-        document.querySelector('#paymentSubmit').addEventListener('click',function(event) {
-            if (jQuery('#nn_payment_details').val() == '') {
-                event.preventDefault();
-                event.stopImmediatePropagation();
-                v13PaymentForm.getPayment(
-                    (data)=>{
-                        jQuery('#nn_payment_details').val(JSON.stringify(data));
-                        jQuery('form[name="checkout_payment"]').submit();
-                        return true;
-                    }
-                )
+    Object.values(order_info).forEach((item) => {
+        item['label'] = item['label'].replace('#single_quote', "'");
+    });
+
+    const paymentFormRequestObj = {
+        iframe: '#novalnetPaymentIframe',
+        initForm : {
+            orderInformation : {
+                lineItems: order_info,
+                billing: {},
+            },
+            uncheckPayments: true,
+            showButton : false
+        }
+    };
+
+    jQuery('#pmt-novalnet_payments').hide();
+    jQuery('#pmt-novalnet_payments').prevUntil('input[type="radio"][name="payment"]').not('label').css({"display": "none"});
+
+    /**
+     * Initiate the payment form IFRAME
+     */
+    novalnetPaymentIframe.initiate(paymentFormRequestObj);
+
+    /**
+     * Wallet payments response callback
+     */
+    novalnetPaymentIframe.walletResponse({
+        onProcessCompletion: (response) => {
+            if (response.result.status == 'SUCCESS') {
+                jQuery('#nn_payment_details').val(JSON.stringify(response));
+                let submitEl = jQuery("div #paymentSubmit :submit");
+                jQuery(submitEl).click();
+                return {status: 'SUCCESS', statusText: 'successfull'};
+            } else {
+                return {status: 'FAILURE', statusText: 'failure'};
             }
+        }
+    });
+
+    /**
+     * Payment form validation result callback
+     */
+    novalnetPaymentIframe.validationResponse((data) => {});
+
+    /**
+     * Gives selected payment method
+     */
+    novalnetPaymentIframe.selectedPayment((data) => {
+            jQuery('#nn_payment_details').val(null);
+            jQuery('#pmt-novalnet_payments').prop('checked', true);
+            jQuery('#pmt-novalnet_payments').hide();
+            jQuery('#nn_selected_payment_data').val(JSON.stringify(data));
+        if (jQuery("input[id*='pmt-novalnet_payments']:checked") && (data.payment_details.type == 'GOOGLEPAY' || data.payment_details.type == 'APPLEPAY')) {
+            jQuery('.button_continue_checkout').hide();
+            if (jQuery('#conditions').length) {
+                jQuery('#conditions').prop('checked', true);
+            }
+        } else {
+            jQuery('.button_continue_checkout').show();
+            if (jQuery('#conditions').length) {
+                jQuery('#conditions').prop('checked', false);
+            }
+        }
         });
+
+    /**
+     * To uncheck novalnet payments when other payments selected
+     */
+    $(document).on('click', 'input[name="payment"]', function (event) {
+        if (this.checked) {
+            novalnetPaymentIframe.uncheckPayment();
+        }
+    });
+
+    /**
+     * To get payment response from iframe
+     */
+    document.querySelector('#paymentSubmit').addEventListener('click', function (event) {
+        if (jQuery('#nn_payment_details').val() == '') {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            novalnetPaymentIframe.getPayment((data) => {
+                    jQuery('#nn_payment_details').val(JSON.stringify(data));
+                    jQuery('form[name="checkout_payment"]').submit();
+                    return true;
+            });
+        }
+    });
 });
