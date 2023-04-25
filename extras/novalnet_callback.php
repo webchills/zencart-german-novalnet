@@ -238,7 +238,7 @@ class NovalnetWebhooks
         global $db;
         $order_details = [];
 
-        $novalnet_order_details = $db->Execute("SELECT * FROM novalnet_transaction_detail WHERE tid = '".$this->parent_tid."'");
+        $novalnet_order_details = $db->Execute("SELECT * FROM ".TABLE_NOVALNET_TRANSACTION_DETAIL." WHERE tid = '".$this->parent_tid."'");
         $orderNumber = !empty($novalnet_order_details->fields['order_no']) ? $novalnet_order_details->fields['order_no'] : (isset($this->event_data['transaction']['order_no']) ? $this->event_data['transaction']['order_no'] : '');
 
         if (empty($orderNumber)) {
@@ -399,7 +399,7 @@ class NovalnetWebhooks
         }
 
         if (!isset($this->event_data['transaction']['order_no'])) {
-            $orderId = $db->Execute("SELECT order_no FROM novalnet_transaction_detail WHERE tid = " . $this->event_data['event']['parent_tid']);
+            $orderId = $db->Execute("SELECT order_no FROM ".TABLE_NOVALNET_TRANSACTION_DETAIL." WHERE tid = " . $this->event_data['event']['parent_tid']);
             $order_no = $orderId->fields['order_no'];
         } else {
             $order_no = $this->event_data['transaction']['order_no'];
@@ -697,7 +697,7 @@ class NovalnetWebhooks
         if ($action != 'insert' && $parameters == '') {
             return false;
         }
-        zen_db_perform('novalnet_transaction_detail', $data, $action, $parameters);
+        zen_db_perform(TABLE_NOVALNET_TRANSACTION_DETAIL, $data, $action, $parameters);
     }
 
     /**

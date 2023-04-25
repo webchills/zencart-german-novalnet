@@ -485,7 +485,7 @@ class novalnet_payments extends base
                     }
 
                     if (!empty($oID)) {
-                        zen_db_perform('novalnet_transaction_detail', $update_data, 'update', 'order_no='.$oID);
+                        zen_db_perform(TABLE_NOVALNET_TRANSACTION_DETAIL, $update_data, 'update', 'order_no='.$oID);
                     }
 
                     $order_status_value = ($update_data['refund_amount'] >= $txn_details->fields['amount']) ? NovalnetHelper::getOrderStatusId() : $current_order_status->fields['orders_status'];
@@ -536,7 +536,7 @@ class novalnet_payments extends base
             }
 
             if (!empty($oID) && isset($response['transaction']['status'])) {
-                zen_db_perform('novalnet_transaction_detail', $update_data, 'update', 'order_no='.$oID);
+                zen_db_perform(TABLE_NOVALNET_TRANSACTION_DETAIL, $update_data, 'update', 'order_no='.$oID);
             }
 
             zen_redirect(zen_href_link(FILENAME_ORDERS, zen_get_all_get_params(['action']) . 'action=edit' . '&oID=' . (int)$oID));
@@ -605,7 +605,7 @@ class novalnet_payments extends base
             }
 
             if (!empty($oID) &&  isset($response['transaction']['status'])) {
-                zen_db_perform('novalnet_transaction_detail', $update_data, 'update', 'order_no='.$oID);
+                zen_db_perform(TABLE_NOVALNET_TRANSACTION_DETAIL, $update_data, 'update', 'order_no='.$oID);
             }
 
             zen_redirect(zen_href_link(FILENAME_ORDERS, zen_get_all_get_params(['action']) . 'action=edit' . '&oID=' . (int)$oID));

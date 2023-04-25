@@ -45,7 +45,7 @@ if ($txn_details->RecordCount()) {
                     'tid'    => $response['transaction']['tid'],
                 ];
             if (!empty($request['oID'])) {
-                zen_db_perform('novalnet_transaction_detail', $update_data, 'update', 'order_no='.$request['oID']);
+                zen_db_perform(TABLE_NOVALNET_TRANSACTION_DETAIL, $update_data, 'update', 'order_no='.$request['oID']);
             }
             NovalnetHelper::novalnetUpdateOrderStatus($request['oID'], $message, $current_order_status->fields['orders_status']);
             $messageStack->add_session($response['result']['status_text'], 'success');
@@ -108,7 +108,7 @@ if ($txn_details->RecordCount()) {
             }
 
             if (!empty($request['oID'])) {
-                zen_db_perform('novalnet_transaction_detail', $update_data, 'update', 'order_no='.$request['oID']);
+                zen_db_perform(TABLE_NOVALNET_TRANSACTION_DETAIL, $update_data, 'update', 'order_no='.$request['oID']);
             }
             $order_status = !empty($request['nn_instacancel_allcycles']) ? NovalnetHelper::getOrderStatusId() : $current_order_status->fields['orders_status'];
             NovalnetHelper::novalnetUpdateOrderStatus($request['oID'], $message, $order_status);
@@ -155,7 +155,7 @@ if ($txn_details->RecordCount()) {
                 $message .= PHP_EOL. sprintf((MODULE_PAYMENT_NOVALNET_REFUND_CHILD_TID_MSG), $response['transaction']['refund']['tid']);
             }
             if (!empty($request['oID'])) {
-                zen_db_perform('novalnet_transaction_detail', $update_data, 'update', 'order_no='.$request['oID']);
+                zen_db_perform(TABLE_NOVALNET_TRANSACTION_DETAIL, $update_data, 'update', 'order_no='.$request['oID']);
             }
             $order_status_value = ($update_data['refund_amount'] >= $txn_details->fields['amount']) ? NovalnetHelper::getOrderStatusId() : $current_order_status->fields['orders_status'];
 

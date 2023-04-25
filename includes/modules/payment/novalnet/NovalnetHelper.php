@@ -390,7 +390,7 @@ class NovalnetHelper
     public static function getNovalnetTransDetails($order_no)
     {
         global $db;
-        return $db->Execute("SELECT * FROM novalnet_transaction_detail WHERE order_no='" . zen_db_input($order_no) . "'");
+        return $db->Execute("SELECT * FROM ".TABLE_NOVALNET_TRANSACTION_DETAIL." WHERE order_no='" . zen_db_input($order_no) . "'");
     }
 
     /**
@@ -655,7 +655,7 @@ class NovalnetHelper
             $novalnet_transaction_details['payment_details'] = !empty($cardDetails) ? json_encode($cardDetails) : '{}';
         }
 
-        zen_db_perform('novalnet_transaction_detail', $novalnet_transaction_details, 'insert');
+        zen_db_perform(TABLE_NOVALNET_TRANSACTION_DETAIL, $novalnet_transaction_details, 'insert');
         zen_db_perform(TABLE_ORDERS, $payment_status, "update", "orders_id='$order_id'");
         zen_db_perform(TABLE_ORDERS_STATUS_HISTORY, $status_update, "update", "orders_id='$order_id'");
     }
