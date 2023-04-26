@@ -1,6 +1,7 @@
 <?php
 /**
  * Novalnet payment module
+ * modified for Zen Cart German 1.5.7 by webchills (www.webchills.at)
  * This script is used for processing payments in Novalnet
  *
  * @author     Novalnet AG
@@ -64,7 +65,7 @@ class novalnet_payments extends base
     {
         $this->code        = 'novalnet_payments';
         $this->enabled     = (defined('MODULE_PAYMENT_NOVALNET_STATUS') && MODULE_PAYMENT_NOVALNET_STATUS == 'True');
-        $this->sort_order  = 0;
+        $this->sort_order  = defined('MODULE_PAYMENT_NOVALNET_SORT_ORDER') ? MODULE_PAYMENT_NOVALNET_SORT_ORDER : null;	      
         $this->title       = defined('MODULE_PAYMENT_NOVALNET_CONFIG_TEXT_TITLE') ? MODULE_PAYMENT_NOVALNET_CONFIG_TEXT_TITLE : '';
         $this->description = defined('MODULE_PAYMENT_NOVALNET_CONFIG_TEXT_DESCRIPTION') ? MODULE_PAYMENT_NOVALNET_CONFIG_TEXT_DESCRIPTION :'';
     }
@@ -289,14 +290,16 @@ class novalnet_payments extends base
         $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('Payment access key', 'MODULE_PAYMENT_NOVALNET_ACCESS_KEY', '', 'Get your Payment access key from the <a href=https://admin.novalnet.de target=_blank style=text-decoration: underline; font-weight: bold; color:#0080c9;>Novalnet Admin Portal</a> Project > Choose your project > API credentials >Payment access key', '6', '0', now())");
         $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('Select tariff ID.', 'MODULE_PAYMENT_NOVALNET_TARIFF_ID', '', 'Select a Tariff ID to match the preferred tariff plan you created at the Novalnet Admin Portal for this project', '6', '0', now())");
         $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order,set_function, date_added) VALUES ('Display payment method', 'MODULE_PAYMENT_NOVALNET_STATUS', 'False', 'Do you want to display payments via Novalnet?', '6', '0', 'zen_cfg_select_option(array(\'True\', \'False\'), ', now())");
+	      $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values ('Sort order of display.', 'MODULE_PAYMENT_NOVALNET_SORT_ORDER', '0', 'Sort order of display. Lowest is displayed first.', '6', '1', now())");
         $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order,set_function, date_added) VALUES ('<h2>Notification / Webhook URL Setup</h2>Allow manual testing of the Notification / Webhook URL', 'MODULE_PAYMENT_NOVALNET_CALLBACK_TEST_MODE', 'False', 'Enable this to test the Novalnet Notification / Webhook URL manually. Disable this before setting your shop live to block unauthorized calls from external parties', '6', '0', 'zen_cfg_select_option(array(\'True\', \'False\'), ', now())");
         $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('<script src=../includes/modules/payment/novalnet/novalnet_auto_config.js type=text/javascript></script><input type=button id=webhook_url_button style=font-weight:bold;color:#0080c9 value=Configure> <br> Send e-mail to', 'MODULE_PAYMENT_NOVALNET_CALLBACK_MAIL_TO', '', 'Notification / Webhook URL execution messages will be sent to this e-mail', '6', '0', now())");
         $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order,set_function, use_function, date_added) VALUES ('Notification / Webhook URL', 'MODULE_PAYMENT_NOVALNET_CALLBACK_URL', '" . ((defined('ENABLE_SSL_CATALOG') && ENABLE_SSL_CATALOG === true) ? HTTPS_SERVER : HTTP_SERVER ) .DIR_WS_CATALOG. 'extras/novalnet_callback.php' . "', 'Notification / Webhook URL is required to keep the merchant’s database/system synchronized with the Novalnet account (e.g. delivery status). Refer the Installation Guide for more information', '6', '0','','', now())");
-      // www.zen-cart-pro.at german admin languages_id==43 START
+        // www.zen-cart-pro.at german admin languages_id==43 START
         $db->Execute("replace into " . TABLE_CONFIGURATION_LANGUAGE   . " (configuration_title, configuration_key, configuration_language_id, configuration_description, date_added) values ('Aktivierungsschlüssel des Produkts', 'MODULE_PAYMENT_NOVALNET_PUBLIC_KEY', '43', 'Ihren Produktaktivierungsschlüssel finden Sie im <a href=https://admin.novalnet.de target=_blank style=text-decoration:underline;font-weight:bold;color:#0080c9>Novalnet Admin-Portal</a> Projekte > Wählen Sie Ihr Projekt > API-Anmeldeinformationen > API-Signatur (Produktaktivierungsschlüssel)', now())");
         $db->Execute("replace into " . TABLE_CONFIGURATION_LANGUAGE   . " (configuration_title, configuration_key, configuration_language_id, configuration_description, date_added) values ('Zahlungs-Zugriffsschlüssel', 'MODULE_PAYMENT_NOVALNET_ACCESS_KEY', '43', 'Ihren Paymentzugriffsschlüssel finden Sie im <a href=https://admin.novalnet.de target=_blank style=text-decoration:underline;font-weight:bold;color:#0080c9>Novalnet Admin-Portal</a> Projekte > Wählen Sie Ihr Projekt > API-Anmeldeinformationen > Paymentzugriffsschlüssel', now())");
         $db->Execute("replace into " . TABLE_CONFIGURATION_LANGUAGE   . " (configuration_title, configuration_key, configuration_language_id, configuration_description, date_added) values ('Auswahl der Tarif-ID', 'MODULE_PAYMENT_NOVALNET_TARIFF_ID', '43', 'Wählen Sie eine Tarif-ID, die dem bevorzugten Tarifplan entspricht, den Sie im Novalnet Admin-Portal für dieses Projekt erstellt haben', now())");
-        $db->Execute("replace into " . TABLE_CONFIGURATION_LANGUAGE   . " (configuration_title, configuration_key, configuration_language_id, configuration_description, date_added) values ('Zahlungsart anzeigen', 'MODULE_PAYMENT_NOVALNET_STATUS', '43', 'Möchten Sie Zahlungen über Novalnet anzeigen?', now())");
+        $db->Execute("replace into " . TABLE_CONFIGURATION_LANGUAGE   . " (configuration_title, configuration_key, configuration_language_id, configuration_description, date_added) values ('Novalnet aktivieren', 'MODULE_PAYMENT_NOVALNET_STATUS', '43', 'Möchten Sie Zahlungen über Novalnet aktivieren?', now())");
+	      $db->Execute("replace into " . TABLE_CONFIGURATION_LANGUAGE   . " (configuration_title, configuration_key, configuration_language_id, configuration_description, date_added) values ('Sortierreihenfolge', 'MODULE_PAYMENT_NOVALNET_SORT_ORDER', '43', 'An welcher Stelle der Zahlungsarten soll Novalnet angeboten werden? Niedrigste Werte werden zuoberst angezeigt.', now())");  
         $db->Execute("replace into " . TABLE_CONFIGURATION_LANGUAGE   . " (configuration_title, configuration_key, configuration_language_id, configuration_description, date_added) values ('<h2>Benachrichtigungs- / Webhook-URL festlegen</h2><br> Manuelles Testen der Benachrichtigungs / Webhook-URL erlauben', 'MODULE_PAYMENT_NOVALNET_CALLBACK_TEST_MODE', '43', 'Aktivieren Sie diese Option, um die Novalnet-Benachrichtigungs-/Webhook-URL manuell zu testen. Deaktivieren Sie die Option, bevor Sie Ihren Shop liveschalten, um unautorisierte Zugriffe von Dritten zu blockieren', now())");
         $db->Execute("replace into " . TABLE_CONFIGURATION_LANGUAGE   . " (configuration_title, configuration_key, configuration_language_id, configuration_description, date_added) values ('Benachrichtigung / Webhook-URL im Novalnet-Verwaltungsportal', 'MODULE_PAYMENT_NOVALNET_CALLBACK_URL', '43', 'Sie müssen die folgende Webhook-URL im <a href=https://admin.novalnet.de target=_blank style=text-decoration:underline;font-weight:bold;color:#0080c9>Novalnet Admin-Portal</a> hinzufügen. Dadurch können Sie Benachrichtigungen über den Transaktionsstatus erhalten', now())");
         $db->Execute("replace into " . TABLE_CONFIGURATION_LANGUAGE   . " (configuration_title, configuration_key, configuration_language_id, configuration_description, date_added) values ('<script src=../includes/modules/payment/novalnet/novalnet_auto_config.js type=text/javascript></script><input type=button id=webhook_url_button style=font-weight:bold;color:#0080c9 value=Konfigurieren> <br> E-Mails senden an', 'MODULE_PAYMENT_NOVALNET_CALLBACK_MAIL_TO', '43', 'E-Mail-Benachrichtigungen werden an diese E-Mail-Adresse gesendet', now())");
@@ -311,7 +314,8 @@ class novalnet_payments extends base
     {
         global $db;
         $db->Execute("DELETE FROM " . TABLE_CONFIGURATION . " WHERE configuration_key LIKE 'MODULE\_PAYMENT\_NOVALNET\_%'");
-        $db->Execute("DELETE FROM ".TABLE_ORDERS_STATUS." WHERE orders_status_name LIKE '%Novalnet%'");
+        $db->Execute("DELETE FROM " . TABLE_CONFIGURATION_LANGUAGE . " WHERE configuration_key LIKE 'MODULE\_PAYMENT\_NOVALNET\_%'");
+	$db->Execute("DELETE FROM ".TABLE_ORDERS_STATUS." WHERE orders_status_name LIKE '%Novalnet%'");
     }
 
     /**
@@ -330,6 +334,7 @@ class novalnet_payments extends base
               
         return array (
             'MODULE_PAYMENT_NOVALNET_STATUS',
+	          'MODULE_PAYMENT_NOVALNET_SORT_ORDER',
             'MODULE_PAYMENT_NOVALNET_PUBLIC_KEY',
             'MODULE_PAYMENT_NOVALNET_ACCESS_KEY',
             'MODULE_PAYMENT_NOVALNET_TARIFF_ID',
