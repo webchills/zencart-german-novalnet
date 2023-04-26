@@ -39,10 +39,10 @@ if (function_exists('zen_register_admin_page')) {
         zen_register_admin_page('customersNovalnetTransactions', 'BOX_CUSTOMERS_NOVALNET_TRANSACTIONS', 'FILENAME_NOVALNET_TRANSACTIONS','' , 'customers', 'Y', 400);
       }    
 }
+}
 
 if ($can_autodelete) {
 	// Either the config utility file has been registered, or it doesn't need to be. Can stop the wasteful process
 	// of having this script run again by having it delete itself
 	@unlink(DIR_WS_INCLUDES . 'functions/extra_functions/reg_novalnet_transactions.php');
-}
 }
