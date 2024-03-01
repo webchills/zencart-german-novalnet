@@ -13,19 +13,6 @@
 
 class NovalnetHelper
 {
-    /**
-     * Payment module version
-     *
-     * @var string
-     */
-    public const NOVALNET_MODULE_VERSION = 'NN13.1.0';
-
-    /**
-     * Payment form version
-     *
-     * @var string
-     */
-    public const NOVALNET_PAYMENT_FORM_VERSION = 13;
 
     /**
      * Check the merchant credentials are empty
@@ -41,25 +28,30 @@ class NovalnetHelper
         ) {
             return true;
         }
-
         return false;
     }
 
+    /**
+     * Get system version
+     *
+     * @return string
+     */
     public static function getSystemVersion()
     {
-        return PROJECT_VERSION_MAJOR . '.' . PROJECT_VERSION_MINOR.'-' . self::NOVALNET_MODULE_VERSION;
+        return PROJECT_VERSION_MAJOR . '.' . PROJECT_VERSION_MINOR . '-NN' . NOVALNET_MODULE_VERSION;
     }
 
-    public static function buildRequestParams(&$params, $require_hosted_page_params = false)
+    /**
+     * Build request parameters for curl call processing
+     *
+     * @param $params
+     */
+    public static function buildRequestParams(&$params)
     {
         NovalnetHelper::getMerchantData($params);
         NovalnetHelper::getCustomerData($params);
-        NovalnetHelper::getTransactionData($params, $require_hosted_page_params);
+        NovalnetHelper::getTransactionData($params);
         NovalnetHelper::getCustomData($params);
-
-        if ($require_hosted_page_params) {
-            NovalnetHelper::getHostedPageData($params);
-        }
     }
 
     /**
@@ -70,9 +62,6 @@ class NovalnetHelper
     public static function getHostedPageData(&$params)
     {
         $params['hosted_page'] = [
-            'hide_blocks' => ['ADDRESS_FORM', 'SHOP_INFO', 'LANGUAGE_MENU', 'HEADER', 'TARIFF'],
-            'skip_pages'  => ['CONFIRMATION_PAGE', 'SUCCESS_PAGE', 'PAYMENT_PAGE'],
-            'form_version' => self::NOVALNET_PAYMENT_FORM_VERSION,
             'type' => 'PAYMENTFORM'
         ];
     }
@@ -82,26 +71,25 @@ class NovalnetHelper
      *
      * @return $data
      */
-    public static function getTransactionData(&$params, $require_hosted_page_params)
+    public static function getTransactionData(&$params)
     {
         global $order;
         $params['transaction'] = [
-            'amount' => self::getOrderAmount($order->info['total']),
-            'currency' => $order->info['currency'],
-            'system_name' => 'Zen_Cart',
-            'system_version' => NovalnetHelper::getSystemVersion(),
-            'system_url' => (defined('ENABLE_SSL') ? (ENABLE_SSL == true ? HTTPS_SERVER : HTTP_SERVER . DIR_WS_CATALOG) : (HTTPS_CATALOG_SERVER . DIR_WS_HTTPS_CATALOG)),
-            'system_ip' => $_SERVER['SERVER_ADDR']
+            'amount' 			=> self::getOrderAmount($order->info['total']),
+            'currency' 			=> $order->info['currency'],
+            'system_name' 		=> 'Zen_Cart',
+            'system_version' 	=> NovalnetHelper::getSystemVersion(),
+            'system_url' 		=> (defined('ENABLE_SSL') ? (ENABLE_SSL == true ? HTTPS_SERVER : HTTP_SERVER . DIR_WS_CATALOG) : (HTTPS_CATALOG_SERVER . DIR_WS_HTTPS_CATALOG)),
+            'system_ip' 		=> $_SERVER['SERVER_ADDR']
         ];
 
-        if (!$require_hosted_page_params && isset($_SESSION['nn_booking_details']) && ($_SESSION['nn_payment_details'])) {
+        if (isset($_SESSION['nn_booking_details']) && ($_SESSION['nn_payment_details'])) {
             $booking_details = $_SESSION['nn_booking_details'];
             $payment_details = $_SESSION['nn_payment_details'];
 
-            $payment_type = !empty($payment_details->type) ? $payment_details->type : '';
+            $params['transaction']['payment_type'] = !empty($payment_details->type) ? $payment_details->type : '';
             $payment_action = !empty($booking_details->payment_action) ? $booking_details->payment_action : '';
 
-            $params['transaction']['payment_type'] = $payment_type;
             if (isset($booking_details->test_mode)) {
                 $params['transaction']['test_mode'] = $booking_details->test_mode;
             }
@@ -127,7 +115,7 @@ class NovalnetHelper
                 $params['transaction']['due_date'] = date("Y-m-d", strtotime('+' . $booking_details->due_date . ' days'));
             }
 
-            if ($payment_type == 'PAYPAL') {
+            if ($params['transaction']['payment_type'] == 'PAYPAL') {
                 self::paypal_sheet_details($params);
             }
 
@@ -144,7 +132,7 @@ class NovalnetHelper
             
             if (!empty($booking_details->cycle)) {
                 $params['instalment'] = [
-                    'interval' => '1m',
+                    'interval' 	=> '1m',
                     'cycles'    => $booking_details->cycle,
                 ];
             }
@@ -174,7 +162,6 @@ class NovalnetHelper
                 $billing_country_code = $db->Execute("select countries_iso_code_2  from ".TABLE_COUNTRIES." where countries_id = '".$billing_country_query->fields['countries_id']."'");
             }
         }
-
         return !empty($billing_country_code->fields['countries_iso_code_2']) ? $billing_country_code->fields['countries_iso_code_2'] : '';
     }
 
@@ -202,7 +189,7 @@ class NovalnetHelper
     /**
      * Get customer data
      *
-     * @return $data
+     * @return $params
      */
     public static function getCustomerData(&$params)
     {
@@ -211,17 +198,17 @@ class NovalnetHelper
         $deliveryCountry_code = !isset($order->delivery['country']['iso_code_2']) ? self::getDeliveryCountry($order) : $order->delivery['country']['iso_code_2'];
 
         $params['customer'] = [
-            'gender' => !empty($order->billing['gender']) ? $order->billing['gender'] : 'u',
-            'first_name' => !empty($order->billing['firstname']) ? $order->billing['firstname'] : $order->billing['name'],
-            'last_name' => !empty($order->billing['lastname']) ? $order->billing['lastname'] : $order->billing['name'],
-            'email' => $order->customer['email_address'],
-            'customer_ip' => zen_get_ip_address(),
-            'customer_no' => !empty($_SESSION['customer_id']) ? $_SESSION['customer_id'] : $order->customer['id'],
-            'billing' => [
-                'street' => !empty($order->billing['suburb']) ? ($order->billing['street_address'] . ',' . $order->billing['suburb']) : $order->billing['street_address'],
-                'city' => $order->billing['city'],
-                'zip' => $order->billing['postcode'],
-                'country_code' => $billingCountry_code
+            'gender' 		=> !empty($order->billing['gender']) ? $order->billing['gender'] : 'u',
+            'first_name' 	=> !empty($order->billing['firstname']) ? $order->billing['firstname'] : $order->billing['name'],
+            'last_name' 	=> !empty($order->billing['lastname']) ? $order->billing['lastname'] : $order->billing['name'],
+            'email' 		=> $order->customer['email_address'],
+            'customer_ip' 	=> zen_get_ip_address(),
+            'customer_no' 	=> !empty($_SESSION['customer_id']) ? $_SESSION['customer_id'] : $order->customer['id'],
+            'billing' 		=> [
+                'street' 		=> !empty($order->billing['suburb']) ? ($order->billing['street_address'] . ',' . $order->billing['suburb']) : $order->billing['street_address'],
+                'city' 			=> $order->billing['city'],
+                'zip' 			=> $order->billing['postcode'],
+                'country_code' 	=> $billingCountry_code
             ]
         ];
         if (isset($order->billing['state'])) {
@@ -235,10 +222,10 @@ class NovalnetHelper
             $params['customer']['shipping']['same_as_billing'] = 1;
         } else {
             $params['customer']['shipping'] = [
-                'street' => !empty($order->delivery['suburb']) ? $order->delivery['street_address'] . ',' . $order->delivery['suburb'] : $order->delivery['street_address'],
-                'city' => $order->delivery['city'],
-                'zip' => $order->delivery['postcode'],
-                'country_code' => $deliveryCountry_code
+                'street' 		=> !empty($order->delivery['suburb']) ? $order->delivery['street_address'] . ',' . $order->delivery['suburb'] : $order->delivery['street_address'],
+                'city' 			=> $order->delivery['city'],
+                'zip' 			=> $order->delivery['postcode'],
+                'country_code' 	=> $deliveryCountry_code
             ];
 
             if (!empty($order->delivery['company'])) {
@@ -268,7 +255,9 @@ class NovalnetHelper
 
     /**
      * Check billing and shpping address is same
-     *
+     * @param $billingCountry_code
+     * @param $deliveryCountry_code
+     * 
      * @return boolean
      */
     public static function isBillingShippingsame($billingCountry_code, $deliveryCountry_code)
@@ -281,7 +270,6 @@ class NovalnetHelper
             'postcode' => $order->delivery['postcode'],
             'country' => $deliveryCountry_code
         );
-
         $billing_address = array(
             'street' => $order->billing['street_address'],
             'city' => ($order->billing['city']),
@@ -322,7 +310,7 @@ class NovalnetHelper
     public static function getWalletParam()
     {
         global $order, $db;
-        $tax_value = $tax_amount = $coupon_amount = $discount = $currency_value = 0;
+        $tax_value = $coupon_amount = $discount = $currency_value = 0;
         $currency_value = ($order->info['currency_value'] != 0) ? ($order->info['currency_value']) : '';
         $articleDetails = [];
 
@@ -385,7 +373,8 @@ class NovalnetHelper
      * Get Novalnet transaction details from novalnet table
      *
      * @param array $order_no
-     * @return integer
+     * 
+     * @return object
      */
     public static function getNovalnetTransDetails($order_no)
     {
@@ -396,14 +385,15 @@ class NovalnetHelper
     /**
      * Send request to server
      *
-     *  @param array $data
-     * @param string request url
+     * @param array $data
+     * @param string paygate_url
+     * @param string access_key
      */
     public static function sendRequest($data, $paygate_url, $access_key = null)
     {
         $headers = self::getHeadersParam($access_key);
         $json_data = !empty($data) ? json_encode($data) : '{}';
-        
+		
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_URL, $paygate_url);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
@@ -415,8 +405,8 @@ class NovalnetHelper
         if (curl_errno($curl)) {
             return ['status_code' => 106, 'status_text' => curl_error($curl)];
         }
-        curl_close($curl);
-        
+        curl_close($curl);      
+		
         return !empty($result) ? json_decode($result, true) : [];
     }
 
@@ -424,7 +414,7 @@ class NovalnetHelper
      * Get transaction details
      * @param $response
      *
-     * @return $note
+     * @return $txn_details
      */
     public static function getTransactionDetails($response)
     {
@@ -432,7 +422,7 @@ class NovalnetHelper
         $txn_details = '';
         $payment_type = !empty($response['transaction']['payment_type']) ? $response['transaction']['payment_type'] : '';
 
-        if (! empty($response ['transaction']['tid'])) {
+        if (!empty($response ['transaction']['tid'])) {
             if ($payment_type == 'GOOGLEPAY' && isset($response['transaction']['payment_data'])) {
                 $txn_details .= PHP_EOL. sprintf(MODULE_PAYMENT_NOVALNET_WALLET_PAYMENT_SUCCESS_TEXT, $response['transaction']['payment_data']['last_four']);
             }
@@ -445,8 +435,7 @@ class NovalnetHelper
             $txn_details .= PHP_EOL. MODULE_PAYMENT_NOVALNET_ZEROAMOUNT_BOOKING_MESSAGE;
         }
 
-        if (in_array($payment_type, array('GUARANTEED_INVOICE', 'GUARANTEED_DIRECT_DEBIT_SEPA', 'INSTALMENT_INVOICE', 'INSTALMENT_DIRECT_DEBIT_SEPA'))
-            && $response['transaction']['status'] == 'PENDING') {
+        if ($response['transaction']['status_code'] == 75 && $response['transaction']['status'] == 'PENDING') {
             $txn_details .= PHP_EOL . MODULE_PAYMENT_NOVALNET_MENTION_GUARANTEE_PAYMENT_PENDING_TEXT.PHP_EOL;
         }
 
@@ -570,7 +559,7 @@ class NovalnetHelper
      * Get shop order status id
      *
      * @param $transaction_status
-     * @param $payment_method
+     * @param $payment_name
      *
      * @return $order_status_id
      */
@@ -604,16 +593,16 @@ class NovalnetHelper
         global $order;
         $payment_status = [];
         $status_update  = [];
+        $payment_details = [];
         $payment_type = !empty($response['transaction']['payment_type']) ? $response['transaction']['payment_type'] : '';
         $payment_status['orders_status'] = $status_update['orders_status_id'] = self::getOrderStatus($response['transaction']['status'], $payment_type);
         $status_update['comments']  = $order->info['comments'] = zen_db_prepare_input($txn_details);
         $novalnet_transaction_details = array(
-            'order_no' => $order_id,
-            'tid' => $response['transaction']['tid'],
-            'amount' => $response['transaction']['amount'],
-            'currency' => $response['transaction']['currency'],
-            'payment_type' => $payment_type,
-            'status' => $response['transaction']['status']
+            'order_no' 		=> $order_id,
+            'tid' 			=> $response['transaction']['tid'],
+            'amount' 		=> $response['transaction']['amount'],
+            'payment_type' 	=> $payment_type,
+            'status' 		=> $response['transaction']['status']
         );
 
         if (!empty($response['instalment']) && $response['transaction']['status'] == 'CONFIRMED') {
@@ -628,33 +617,25 @@ class NovalnetHelper
             if (isset($response['transaction']['due_date'])) {
                 $payment_details['novalnet_due_date'] = $response['transaction']['due_date'];
             }
-
-            $novalnet_transaction_details['payment_details'] = !empty($payment_details) ? json_encode($payment_details) : '{}';
         } elseif (!empty($response['transaction']['nearest_stores'])) {
-            $payment_details = $response['transaction']['nearest_stores'];
-            $payment_details['novalnet_due_date'] = $response['transaction']['due_date'];
-            $novalnet_transaction_details['payment_details'] = !empty($payment_details) ? json_encode($payment_details) : '{}';
+            $payment_details['nearest_stores'] = $response['transaction']['nearest_stores'];
+            $_SESSION['novalnet_checkout_js'] 	 = $response['transaction']['checkout_js'];
+			$_SESSION['novalnet_checkout_token'] = $response['transaction']['checkout_token'];
         } elseif (!empty($response['transaction']['payment_data']['token']) && isset($_SESSION['nn_booking_details']->create_token) && $_SESSION['nn_booking_details']->create_token == '1') {
-            $payment_data = [];
-            $payment_data = $response['transaction']['payment_data'];
-
+            $payment_details = $response['transaction']['payment_data'];
             if ($_SESSION['nn_booking_details']->payment_action == 'zero_amount') {
-                $payment_data['zero_amount_booking'] = 1;
+                $payment_details['zero_amount_booking'] = 1;
             }
-
-            $novalnet_transaction_details['payment_details'] = !empty($payment_data) ? json_encode($payment_data) : '{}';
         } elseif (!empty($response['transaction']['payment_data']['token'])
             && !empty($_SESSION['nn_booking_details']->payment_action)
             && $_SESSION['nn_booking_details']->payment_action == 'zero_amount'
         ) {
-            $cardDetails = array(
+            $payment_details = array(
                 'token' => $response['transaction']['payment_data']['token'],
                 'zero_amount_booking' => 1
             );
-
-            $novalnet_transaction_details['payment_details'] = !empty($cardDetails) ? json_encode($cardDetails) : '{}';
         }
-
+		$novalnet_transaction_details['payment_details'] = !empty($payment_details) ? json_encode($payment_details) : '{}';
         zen_db_perform(TABLE_NOVALNET_TRANSACTION_DETAIL, $novalnet_transaction_details, 'insert');
         zen_db_perform(TABLE_ORDERS, $payment_status, "update", "orders_id='$order_id'");
         zen_db_perform(TABLE_ORDERS_STATUS_HISTORY, $status_update, "update", "orders_id='$order_id'");
@@ -684,20 +665,15 @@ class NovalnetHelper
 
         foreach ($cycles as $cycle => $cycle_date) {
             $cycle_details[$cycle -1 ]['date'] = $cycle_date;
-
             $cycle_details[$cycle -1 ]['next_instalment_date'] = $cycle_date;
-
             $cycle_details[$cycle -1 ]['status'] = 'Pending';
-
             if (!empty($instalment['cycles_executed']) && $cycle == $instalment['cycles_executed']) {
                 $cycle_details[$cycle -1 ]['reference_tid'] = !empty($instalment['tid']) ? $instalment['tid'] : (!empty($response['transaction']['tid']) ? $response['transaction']['tid'] : '');
                 $cycle_details[$cycle -1 ]['status'] = 'Paid';
                 $cycle_details[$cycle -1 ]['paid_date'] = date('Y-m-d H:i:s');
             }
-
             $cycle_details[$cycle -1 ]['instalment_cycle_amount'] = ($cycle == $total_cycles)?$last_cycle_amount : $instalment['cycle_amount'];
         }
-
         return (!empty($cycle_details) ? json_encode($cycle_details) : '{}');
     }
 
@@ -711,8 +687,8 @@ class NovalnetHelper
     {
         $params = [
             'transaction' => [
-                'tid' => $_SESSION['nn_response']['transaction']['tid'],
-                'order_no' => $order_no,
+                'tid' 		=> $_SESSION['nn_response']['transaction']['tid'],
+                'order_no' 	=> $order_no,
             ],
         ];
 
@@ -756,7 +732,6 @@ class NovalnetHelper
                 return true;
             }
         }
-
         return false;
     }
 
@@ -764,7 +739,8 @@ class NovalnetHelper
      * Get payment response text
      *
      * @param array $response
-     * @param string
+     * 
+     * @return string
      */
     public static function getServerResponse($response)
     {
@@ -796,7 +772,7 @@ class NovalnetHelper
     /**
      * Get merchant data
      *
-     * @return $data
+     * @return $params
      */
     public static function getMerchantData(&$params)
     {
@@ -841,7 +817,7 @@ class NovalnetHelper
      *
      * @return mixed
      */
-    public static function insertTransactionDetails($response, $status_update = false, $order_no = '')
+    public static function insertTransactionDetails($response, $order_no = '')
     {
         $txn_details = '';
 
@@ -850,9 +826,7 @@ class NovalnetHelper
             $payment_type = !empty($response['transaction']['payment_type']) ? $response['transaction']['payment_type'] : '';
 
             // Invoice payments
-            if ((in_array($payment_type, array('INVOICE', 'PREPAYMENT')))
-            || (in_array($payment_type, array('GUARANTEED_INVOICE', 'INSTALMENT_INVOICE')) && $response['transaction']['status'] != 'PENDING')
-            ) {
+            if (!empty($response['transaction']['bank_details']) && $response['transaction']['status_code'] != 75) {
                 $txn_details .= self::getBankDetails($response);
             }
 
@@ -861,17 +835,10 @@ class NovalnetHelper
                 $txn_details .= self::getNearestStoreDetails($response);
             }
 
-            if (in_array($payment_type, array('INSTALMENT_INVOICE', 'INSTALMENT_DIRECT_DEBIT_SEPA')) && ($response['transaction']['status'] == 'CONFIRMED')) {
+            if (!empty($response['instalment']) && ($response['transaction']['status'] == 'CONFIRMED')) {
                 $txn_details .= self::getInstalmentDetails($response);
             }
-
-            if ($status_update) {
-                self::updateOrderStatus($order_no, $txn_details, $response, $payment_type);
-            } else {
-                return $txn_details;
-            }
         }
-
         return $txn_details;
     }
 

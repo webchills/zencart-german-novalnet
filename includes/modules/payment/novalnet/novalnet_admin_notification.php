@@ -11,24 +11,16 @@
  * Script : novalnet_admin_notification.php
  */
 
-require_once(DIR_FS_CATALOG . 'includes/modules/payment/novalnet/NovalnetHelper.php');
 include_once(DIR_FS_CATALOG ."includes/languages/". $_SESSION['language']."/modules/payment/novalnet_payments.php");
 
-    $outputStartBlock = $outputVoidCapt = $outputCapt = $outputRefund = $outputEndBlock = $output = '';
+    $outputVoidCapt = $outputRefund = $output = '';
     $nn_script = '<script type="text/javascript" src="' . DIR_WS_CATALOG . 'includes/modules/payment/novalnet/novalnet_extension.js"></script>';
     $nn_html = '<tr class="dataTableHeadingRow" style="background-color : #dddddd;">';
     $request = $_REQUEST;
 
 if (method_exists($this, '_doRefund')) {
     // Refund process
-    if (($transaction_details->fields['amount'] > 0) &&
-        (($transaction_details->fields['status'] == 'CONFIRMED' && ($transaction_details->fields['amount'] != $transaction_details->fields['refund_amount'])) ||
-            ($transaction_details->fields['status']=='PENDING' &&
-            ($transaction_details->fields['amount'] > $transaction_details->fields['refund_amount']) &&
-            in_array($transaction_details->fields['payment_type'], array('INVOICE','PREPAYMENT','CASHPAYMENT')))
-        ) &&
-        !in_array($transaction_details->fields['payment_type'], array('MULTIBANCO','INSTALMENT_INVOICE','INSTALMENT_DIRECT_DEBIT_SEPA'))
-    ) {
+    if (isRefund($transaction_details->fields)) {
         $avail_refund = $refund_value = 0;
         $avail_refund = (!empty($transaction_details->fields['callback_amount'])) ? $transaction_details->fields['callback_amount'] : $transaction_details->fields['amount'];
         $refund_value = (!empty($transaction_details->fields['refund_amount'])) ? ($avail_refund - $transaction_details->fields['refund_amount']) : $avail_refund;
@@ -43,7 +35,6 @@ if (method_exists($this, '_doRefund')) {
         $outputRefund .= '<tr class="dataTableRow">';
         $outputRefund .= '<td class="dataTableContent">'.MODULE_PAYMENT_NOVALNET_REFUND_AMT_TITLE . '</td>';
         $outputRefund .=  zen_draw_hidden_field('oID', $request['oID']);
-        $outputRefund .=  zen_draw_hidden_field('nn_refund_amount', MODULE_PAYMENT_NOVALNET_PAYMENT_REFUND_CONFIRM);
         $outputRefund .=  zen_draw_hidden_field('nn_amount_error', MODULE_PAYMENT_NOVALNET_AMOUNT_ERROR_MESSAGE);
         $outputRefund .=  zen_draw_hidden_field('nn_refund_amount_confirm', MODULE_PAYMENT_NOVALNET_PAYMENT_REFUND_CONFIRM);
         $outputRefund .= '<td class="dataTableContent">';
@@ -88,10 +79,8 @@ if (method_exists($this, '_doVoid') && method_exists($this, '_doCapt')) {
 
 // prepare output based on suitable content components
 $output = '<!-- BOF: novalnet transaction processing tools -->';
-$output .= $outputStartBlock;
 
 if (defined('MODULE_PAYMENT_NOVALNET_STATUS') && MODULE_PAYMENT_NOVALNET_STATUS == 'True') {
-    $output .= $outputEndBlock;
 
     if (method_exists($this, '_doRefund')) {
         $output .= $outputRefund;
@@ -102,5 +91,27 @@ if (defined('MODULE_PAYMENT_NOVALNET_STATUS') && MODULE_PAYMENT_NOVALNET_STATUS 
     }
 }
 
-$output .= $outputEndBlock;
 $output .= '<!-- EOF: novalnet transaction processing tools -->';
+
+
+/**
+* Check whether refund block shown or not in admin panel
+*
+* @param array $txn_details
+* 
+* @return boolean
+*/
+function isRefund($txn_details) {
+    if (($txn_details['amount'] > 0) &&
+    (($txn_details['status'] == 'CONFIRMED' && ($txn_details['amount'] != $txn_details['refund_amount'])) ||
+        ($txn_details['status']=='PENDING' &&
+        ($txn_details['amount'] > $txn_details['refund_amount']) &&
+        in_array($txn_details['payment_type'], array('INVOICE','PREPAYMENT','CASHPAYMENT')))
+    ) &&
+    !in_array($txn_details['payment_type'], array('MULTIBANCO','INSTALMENT_INVOICE','INSTALMENT_DIRECT_DEBIT_SEPA'))) {
+        return true;
+
+    } else {
+        return false;
+    }
+}

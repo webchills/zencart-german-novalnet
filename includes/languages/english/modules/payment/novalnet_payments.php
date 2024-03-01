@@ -1,6 +1,7 @@
 <?php
 /**
  * Novalnet payment module
+ *
  * This script is used for English language
  *
  * @author     Novalnet AG
@@ -132,3 +133,5 @@ define('MODULE_PAYMENT_NOVALNET_SHIPPING_LABEL', 'Shipping');
 define('MODULE_PAYMENT_NOVALNET_AMOUNT_UPDATE_NOTE', 'Transaction amount %1$s has been updated successfully on %2$s');
 define('MODULE_PAYMENT_NOVALNET_DUEDATE_UPDATE_NOTE', 'Transaction due date %1$s has been updated successfully on %2$s');
 define('MODULE_PAYMENT_NOVALNET_AMOUNT_DUEDATE_UPDATE_NOTE', 'Transaction amount %1$s and due date %2$s has been updated successfully on %3$s');
+define('MODULE_PAYMENT_NOVALNET_BARZAHLEN_SUCCESS_BUTTON', 'Pay now with Barzahlen');
+define('MODULE_PAYMENT_NOVALNET_WALLET_TOTAL_LABEL', 'Estimated total (No offers applied)');

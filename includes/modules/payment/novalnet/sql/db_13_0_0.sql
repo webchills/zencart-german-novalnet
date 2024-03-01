@@ -15,7 +15,6 @@ CREATE TABLE IF NOT EXISTS novalnet_transaction_detail (
   order_no int unsigned COMMENT 'Order no from shop',
   tid bigint(20) unsigned COMMENT 'Transaction id',
   amount int(10) unsigned COMMENT 'Amount', 
-  currency char(10) COMMENT 'Currency', 
   payment_type varchar(40) COMMENT 'Payment type',
   status varchar(60) COMMENT 'Transaction status',
   payment_details text COMMENT 'Payment details of customer', 

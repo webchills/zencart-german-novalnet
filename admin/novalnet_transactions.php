@@ -1,7 +1,7 @@
 <?php
 /**
  * Novalnet payment module
- * admin component by webchills (www.webchills.at)
+ *
  * @author     Novalnet AG
  * @copyright  Copyright (c) Novalnet
  * @license    https://www.novalnet.de/payment-plugins/kostenlos/lizenz
@@ -11,60 +11,61 @@
  */
 
   require('includes/application_top.php');
-  
+
   $novalnet_sort_order_array = [
-    ['id' => '0', 'text' => TEXT_SORT_NOVALNET_ID_DESC],
-    ['id' => '1', 'text' => TEXT_SORT_NOVALNET_ID],
-    ['id' => '2', 'text' => TEXT_SORT_ZEN_ORDER_ID_DESC],
-    ['id' => '3', 'text' => TEXT_SORT_ZEN_ORDER_ID],
-    ['id' => '4', 'text' => TEXT_SORT_NOVALNET_PAYMENT_TYPE_DESC],
-    ['id' => '5', 'text' => TEXT_SORT_NOVALNET_PAYMENT_TYPE],
-    ['id' => '6', 'text' => TEXT_SORT_NOVALNET_STATUS_DESC],
-    ['id' => '7', 'text' => TEXT_SORT_NOVALNET_STATUS]
+    ['id' => 'id_desc', 'text' => TEXT_SORT_NOVALNET_ID_DESC],
+    ['id' => 'id_asc', 'text' => TEXT_SORT_NOVALNET_ID],
+    ['id' => 'shop_order_desc', 'text' => TEXT_SORT_ZEN_ORDER_ID_DESC],
+    ['id' => 'shop_order_asc', 'text' => TEXT_SORT_ZEN_ORDER_ID],
+    ['id' => 'nn_payment_desc', 'text' => TEXT_SORT_NOVALNET_PAYMENT_TYPE_DESC],
+    ['id' => 'nn_payment_asc', 'text' => TEXT_SORT_NOVALNET_PAYMENT_TYPE],
+    ['id' => 'status_desc', 'text' => TEXT_SORT_NOVALNET_STATUS_DESC],
+    ['id' => 'status_asc', 'text' => TEXT_SORT_NOVALNET_STATUS]
   ];
 
   $novalnet_sort_order = 0;
-  if (isset($_GET['novalnet_sort_order'])) {
-    $novalnet_sort_order = (int) $_GET['novalnet_sort_order'];
-  }
 
+  if (isset($_GET['novalnet_sort_order'])) {
+    $novalnet_sort_order = $_GET['novalnet_sort_order'];
+  }
   switch ($novalnet_sort_order) {
-    case (0):
+    case ('id_desc'):
       $order_by = " order by n.id DESC";
       break;
-    case (1):
+    case ('id_asc'):
       $order_by = " order by n.order_no";
       break;
-    case (2):
+    case ('shop_order_desc'):
       $order_by = " order by n.order_no DESC, n.id";
       break;
-    case (3):
+    case ('shop_order_asc'):
       $order_by = " order by n.order_no, n.id";
       break;
-    case (4):
+    case ('nn_payment_desc'):
       $order_by = " order by n.payment_type DESC";
       break;
-    case (5):
+    case ('nn_payment_asc'):
       $order_by = " order by n.payment_type";
       break;
-      case (6):
+      case ('status_desc'):
       $order_by = " order by n.status";
       break;
-      case (7):
+      case ('status_asc'):
       $order_by = " order by n.status DESC";
       break;
-      
+
     default:
       $order_by = " order by n.id DESC";
       break;
     }
 
   $action = (isset($_GET['action']) ? $_GET['action'] : '');
-  $selected_status = (isset($_GET['novalnet_status']) ? $_GET['novalnet_status'] : '');    
+  $selected_status = (isset($_GET['novalnet_status']) ? $_GET['novalnet_status'] : '');
   $novalnet_statuses = [];
-  $novalnet_statuses[0] = array('id' => 'ON_HOLD', 'text' => 'ON_HOLD'); 
+  $novalnet_statuses[0] = array('id' => 'ON_HOLD', 'text' => 'ON_HOLD');
   $novalnet_statuses[1] = array('id' => 'CONFIRMED', 'text' => 'CONFIRMED');
-  $novalnet_statuses[2]= array('id' => 'PENDING', 'text' => 'PENDING');  
+  $novalnet_statuses[2]= array('id' => 'PENDING', 'text' => 'PENDING');
+  $novalnet_statuses[2]= array('id' => 'DEACTIVATED', 'text' => 'DEACTIVATED');
 ?>
 <!doctype html>
 <html <?php echo HTML_PARAMS; ?>>
@@ -75,23 +76,23 @@
 font-size: 13px;
 margin: 0 0 20px 0;
 padding:0
-} 
+}
 .supportinfo a {
 font-size: 13px;
 
-}  
+}
 #btlogo{
 width:172px;
 height:40px;
 float:right;
 margin:5px 5px 5px 40px;
-} 
+}
 #btsorter{
-width:500px;
+width:600px;
 height:50px;
 float:right;
 margin:-50px 5px 0px 10px;
-} 
+}
 </style>
 
 </head>
@@ -110,24 +111,26 @@ margin:-50px 5px 0px 10px;
   $hidden_field = (isset($_GET['novalnet_status'])) ? zen_draw_hidden_field('novalnet_status', $_GET['novalnet_status']) : '';
   echo '&nbsp;&nbsp;&nbsp;' . TEXT_NOVALNET_SORT_ORDER_INFO . zen_draw_form('novalnet_sort_order', FILENAME_NOVALNET_TRANSACTIONS, '', 'get') . '&nbsp;&nbsp;' . zen_draw_pull_down_menu('novalnet_sort_order', $novalnet_sort_order_array, $novalnet_sort_order, 'onChange="this.form.submit();"') . zen_hide_session_id() . $hidden_field . '</form>';
 ?></span>
-    <span class="supportinfo"><?php echo AMOUNT_INFO; ?> | <a href="https://admin.novalnet.de" target="_blank">Novalnet Admin Portal</a></span>
+    <span class="supportinfo"><?php echo NOVALNET_ADMIN_INFO; ?> | <a href="https://admin.novalnet.de" target="_blank">Novalnet Admin Portal</a></span>
 
        <div class="row">
            <div class="col-sm-12 col-md-9 configurationColumnLeft">
               <table class="table">
               <tr class="dataTableHeadingRow">
               	<td class="dataTableHeadingContent">ID</td>
-              	<td class="dataTableHeadingContent"><?php echo TABLE_HEADING_ORDER_NUMBER; ?></td>              	
-                <td class="dataTableHeadingContent"><?php echo NOVALNET_TRANSACTION_ID; ?></td>
-                <td class="dataTableHeadingContent"><?php echo TABLE_HEADING_AMOUNT; ?></td> 
-                <td class="dataTableHeadingContent"><?php echo TABLE_HEADING_CURRENCY; ?></td>                 
-                <td class="dataTableHeadingContent"><?php echo NOVALNET_PAYMENT_TYPE; ?></td>     
+              	<td class="dataTableHeadingContent"><?php echo TABLE_HEADING_ORDER_NUMBER; ?></td>    
+              	<td class="dataTableHeadingContent"><?php echo TABLE_HEADING_CUSTOMERS; ?></td>
+              	<td class="dataTableHeadingContent"><?php echo NOVALNET_PAYMENT_TYPE; ?></td>          	
+                <td class="dataTableHeadingContent"><?php echo NOVALNET_REFERENCE_ID; ?></td>             
+                <td class="dataTableHeadingContent"><?php echo TABLE_HEADING_AMOUNT; ?></td>                                     
+                <td class="dataTableHeadingContent"><?php echo TABLE_HEADING_DATE_PURCHASED; ?></td>                                     
                 <td class="dataTableHeadingContent" text-right><?php echo NOVALNET_STATUS; ?></td>
                 <td class="dataTableHeadingContent" text-right><?php echo NOVALNET_REFUND_AMOUNT; ?></td>
                 <td class="dataTableHeadingContent" text-right><?php echo NOVALNET_CALLBACK_AMOUNT; ?></td>
-                       
-                       
-                              
+                <td class="dataTableHeadingContent noprint text-right" text-left><?php echo TABLE_HEADING_ACTION; ?></td>
+
+
+
               </tr>
 <?php
   if (zen_not_null($selected_status)) {
@@ -135,37 +138,45 @@ margin:-50px 5px 0px 10px;
     $novalnet_search = $db->bindVars($novalnet_search, ':selectedStatus:', $selected_status, 'string');
     switch ($selected_status) {
       case 'ON_HOLD':
-      case 'CONFIRMED':        
-      case 'PENDING': 
+      case 'CONFIRMED':
+      case 'PENDING':
+      case 'DEACTIVATED':
       default:
-        $novalnet_query_raw = "SELECT * from `".TABLE_NOVALNET_TRANSACTION_DETAIL."` as n, " .TABLE_ORDERS . " as o  where o.orders_id = n.order_no " . $novalnet_search . $order_by;
+        $novalnet_query_raw = "SELECT *, o.payment_method, o.customers_id, o.customers_name, o.customers_company, o.date_purchased from `".TABLE_NOVALNET_TRANSACTION_DETAIL."` as n, " .TABLE_ORDERS . " as o  where o.orders_id = n.order_no " . $novalnet_search . $order_by;
         break;
-   } 
+   }
   } else {
         $novalnet_query_raw = "SELECT * from `".TABLE_NOVALNET_TRANSACTION_DETAIL."` as n left join " .TABLE_ORDERS . " as o on o.orders_id = n.order_no " . $order_by;
 
   }
-
+  require(DIR_WS_CLASSES . 'currencies.php');
+  $currencies = new currencies();
   $novalnet_split = new splitPageResults($_GET['page'], MAX_DISPLAY_SEARCH_RESULTS_NOVALNET_IPN, $novalnet_query_raw, $novalnet_query_numrows);
   $novalnet_response = $db->Execute($novalnet_query_raw);
   foreach ($novalnet_response as $novalnet_tran) {
     if ((!isset($_GET['novalnetId']) || (isset($_GET['novalnetId']) && ($_GET['novalnetId'] == $novalnet_response->fields['id']))) && !isset($novalnetInfo) ) {
-      $novalnetInfo = new objectInfo($novalnet_tran); 
-    }   
-    
+      $novalnetInfo = new objectInfo($novalnet_tran);
+    }
+
       echo '<tr class="dataTableRow" onmouseover="rowOverEffect(this)" onmouseout="rowOutEffect(this)" onclick="document.location.href=\'' . zen_href_link(FILENAME_NOVALNET_TRANSACTIONS, 'page=' . $_GET['page'] . '&novalnetId=' . $novalnet_tran['id'] . (zen_not_null($selected_status) ? '&status=' . $selected_status : '') . (zen_not_null($novalnet_sort_order) ? '&novalnet_sort_order=' . $novalnet_sort_order : '') ) . '\'">' . "\n";
-   
+
 ?>
                 <td class="dataTableContent"> <?php echo $novalnet_tran['id']; ?> </td>
                 <td class="dataTableContent"> <?php echo $novalnet_tran['order_no']; ?> </td>
+                <td class="dataTableContent"> <?php echo '<a href="' . zen_href_link(FILENAME_CUSTOMERS, 'cID=' . $novalnet_tran['customers_id'], 'NONSSL') . '">' . zen_image(DIR_WS_ICONS . 'preview.gif', ICON_PREVIEW . ' ' . TABLE_HEADING_CUSTOMERS) . '</a>&nbsp;' . $novalnet_tran['customers_name'] . ($novalnet_tran['customers_company'] !== '' ? '<br>' . $novalnet_tran['customers_company'] : ''); ?> </td>
+                <td class="dataTableContent"> <?php echo $novalnet_tran['payment_method']; ?> </td>
                 <td class="dataTableContent"> <?php echo $novalnet_tran['tid']; ?> </td>
-		            <td class="dataTableContent"> <?php echo $novalnet_tran['amount']; ?> </td>
-                <td class="dataTableContent"> <?php echo $novalnet_tran['currency']; ?> </td>
-                <td class="dataTableContent"> <?php echo $novalnet_tran['payment_type']; ?> </td>
+		        <td class="dataTableContent"> <?php echo $currencies->format(($novalnet_tran['amount'] / 100), 1, $novalnet_tran['currency']); ?> </td>
+				<td class="dataTableContent"> <?php echo zen_datetime_short($novalnet_tran['date_purchased']); ?> </td> 
                 <td class="dataTableContent"> <?php echo $novalnet_tran['status']; ?>
-                <td class="dataTableContent"> <?php echo $novalnet_tran['refund_amount']; ?>
-                <td class="dataTableContent"> <?php echo $novalnet_tran['callback_amount']; ?>  
-                	
+                <td class="dataTableContent"> <?php if(!empty($novalnet_tran['refund_amount'])) echo $currencies->format(($novalnet_tran['refund_amount'] / 100), 1, $novalnet_tran['currency']); ?>
+                <td class="dataTableContent"> <?php if(!empty($novalnet_tran['callback_amount'])) echo $currencies->format(($novalnet_tran['callback_amount'] / 100), 1, $novalnet_tran['currency']); ?>
+				<td class="dataTableContent noprint text-right dataTableButtonCell">
+                    <?php
+                    echo '<a href="' . zen_href_link(FILENAME_ORDERS, zen_get_all_get_params(array('novalnetId', 'action')) . 'oID=' . $novalnet_tran['order_no'] .'&' . 'novalnetID=' . $novalnet_tran['id'] .'&action=edit' . '&referer=novalnet') . '">' . zen_image(DIR_WS_IMAGES . 'icon_edit.gif', ICON_EDIT) . '</a>';
+                    ?>
+                    &nbsp;
+                </td>
               <?php echo '</tr>';
   }
 ?>
@@ -187,12 +198,11 @@ margin:-50px 5px 0px 10px;
     case 'delete':
       break;
     default:
-      
+
       if (isset($novalnetInfo) && is_object($novalnetInfo)) {
-        $heading[] = ['text' => '<strong>' . 'Novalnet'.' #' . $novalnetInfo->id . '</strong>'];
         $novalnet = $db->Execute("SELECT * FROM " . TABLE_NOVALNET_TRANSACTION_DETAIL . " WHERE id = '" . $novalnetInfo->id . "'");
-        $novalnet_count = $novalnet->RecordCount();  
-	  
+        $novalnet_count = $novalnet->RecordCount();
+
 
       switch ($novalnet->fields['status']){
       	case 'ON_HOLD':
@@ -201,18 +211,17 @@ margin:-50px 5px 0px 10px;
 
 		$order = new order($novalnetInfo->order_no);
         $heading[] = array('text' => '<strong>' . TEXT_INFO_NOVALNET_RESPONSE_BEGIN.'#'.$novalnetInfo->id.' '.TEXT_INFO_NOVALNET_RESPONSE_END.'#'. $novalnetInfo->order_no . '</strong>');
-        $contents[] = array('text' =>  '' . NOVALNET_REFERENCE_ID .'' . ': '.$novalnetInfo->tid);
         $contents[] = array('text' =>  '' . TABLE_HEADING_ORDER_NUMBER .'' . ': '.$novalnetInfo->order_no);
-        $contents[] = array('text' =>  '' . NOVALNET_TRANSACTION_ID .'' . ': '.$novalnetInfo->tid);
-        $contents[] = array('text' =>  '' . TABLE_HEADING_AMOUNT .'' . ': '.$novalnetInfo->amount);
-        $contents[] = array('text' =>  '' . TABLE_HEADING_CURRENCY .'' . ': '.$novalnetInfo->currency);
-        $contents[] = array('text' =>  '' . NOVALNET_PAYMENT_TYPE .'' . ': '.$novalnetInfo->payment_type);
-        $contents[] = array('text' =>  '' . NOVALNET_REFUND_AMOUNT .'' . ': '.$novalnetInfo->refund_amount);   
-        $contents[] = array('text' =>  '' . NOVALNET_CALLBACK_AMOUNT .'' . ': '.$novalnetInfo->callback_amount);              
-        
-        $contents[] = array('align' => 'center', 'text' => '<a href="' . zen_href_link(FILENAME_ORDERS, zen_get_all_get_params(array('novalnetId', 'action')) . 'oID=' . $novalnetInfo->order_no .'&' . 'novalnetID=' . $novalnetInfo->id .'&action=edit' . '&referer=novalnet') . '">' . NOVALNET_VIEW_ORDER. '</a>');
+        $contents[] = array('text' =>  '' . NOVALNET_REFERENCE_ID .'' . ': '.$novalnetInfo->tid);
+        $contents[] = array('text' =>  '' . TABLE_HEADING_AMOUNT .'' . ': '.$currencies->format(($novalnetInfo->amount / 100), 1, $novalnetInfo->currency));
+        $contents[] = array('text' =>  '' . NOVALNET_PAYMENT_TYPE .'' . ': '.$novalnetInfo->payment_method);
+        if (!empty($novalnetInfo->refund_amount))
+        $contents[] = array('text' =>  '' . NOVALNET_REFUND_AMOUNT .'' . ': '.$currencies->format(($novalnetInfo->refund_amount / 100), 1, $novalnetInfo->currency));
+        if (!empty($novalnetInfo->callback_amount))
+        $contents[] = array('text' =>  '' . NOVALNET_CALLBACK_AMOUNT .'' . ': '.$currencies->format(($novalnetInfo->callback_amount / 100), 1, $novalnetInfo->currency));
+
         $count = 1;
-		  
+
 			$contents[] = array('text' =>  '</table>');
 		break;
 		      	case 'CONFIRMED':
@@ -221,43 +230,60 @@ margin:-50px 5px 0px 10px;
 
 		$order = new order($novalnetInfo->order_no);
         $heading[] = array('text' => '<strong>' . TEXT_INFO_NOVALNET_RESPONSE_BEGIN.'#'.$novalnetInfo->id.' '.TEXT_INFO_NOVALNET_RESPONSE_END.'#'. $novalnetInfo->order_no . '</strong>');
-        $contents[] = array('text' =>  '' . NOVALNET_REFERENCE_ID .'' . ': '.$novalnetInfo->tid);
         $contents[] = array('text' =>  '' . TABLE_HEADING_ORDER_NUMBER .'' . ': '.$novalnetInfo->order_no);
-        $contents[] = array('text' =>  '' . NOVALNET_TRANSACTION_ID .'' . ': '.$novalnetInfo->tid);
-        $contents[] = array('text' =>  '' . TABLE_HEADING_AMOUNT .'' . ': '.$novalnetInfo->amount);
-        $contents[] = array('text' =>  '' . TABLE_HEADING_CURRENCY .'' . ': '.$novalnetInfo->currency);
-        $contents[] = array('text' =>  '' . NOVALNET_PAYMENT_TYPE .'' . ': '.$novalnetInfo->payment_type);  
-        $contents[] = array('text' =>  '' . NOVALNET_REFUND_AMOUNT .'' . ': '.$novalnetInfo->refund_amount);   
-        $contents[] = array('text' =>  '' . NOVALNET_CALLBACK_AMOUNT .'' . ': '.$novalnetInfo->callback_amount);  
-        
-        $contents[] = array('align' => 'center', 'text' => '<a href="' . zen_href_link(FILENAME_ORDERS, zen_get_all_get_params(array('novalnetId', 'action')) . 'oID=' . $novalnetInfo->order_no .'&' . 'novalnetID=' . $novalnetInfo->id .'&action=edit' . '&referer=novalnet') . '">' . NOVALNET_VIEW_ORDER. '</a>');
+        $contents[] = array('text' =>  '' . NOVALNET_REFERENCE_ID .'' . ': '.$novalnetInfo->tid);
+        $contents[] = array('text' =>  '' . TABLE_HEADING_AMOUNT .'' . ': '.$currencies->format(($novalnetInfo->amount / 100), 1, $novalnetInfo->currency));
+        $contents[] = array('text' =>  '' . NOVALNET_PAYMENT_TYPE .'' . ': '.$novalnetInfo->payment_method);
+        if (!empty($novalnetInfo->refund_amount))
+        $contents[] = array('text' =>  '' . NOVALNET_REFUND_AMOUNT .'' . ': '.$currencies->format(($novalnetInfo->refund_amount / 100), 1, $novalnetInfo->currency));
+        if (!empty($novalnetInfo->callback_amount))
+        $contents[] = array('text' =>  '' . NOVALNET_CALLBACK_AMOUNT .'' . ': '.$currencies->format(($novalnetInfo->callback_amount / 100), 1, $novalnetInfo->currency));
+
         $count = 1;
-		  
+
 			$contents[] = array('text' =>  '</table>');
 		break;
-		
+
 		case 'PENDING':
 
 		require_once(DIR_WS_CLASSES . 'order.php');
 
 		$order = new order($novalnetInfo->order_no);
         $heading[] = array('text' => '<strong>' . TEXT_INFO_NOVALNET_RESPONSE_BEGIN.'#'.$novalnetInfo->id.' '.TEXT_INFO_NOVALNET_RESPONSE_END.'#'. $novalnetInfo->order_no . '</strong>');
-        $contents[] = array('text' =>  '' . NOVALNET_REFERENCE_ID .'' . ': '.$novalnetInfo->tid);
         $contents[] = array('text' =>  '' . TABLE_HEADING_ORDER_NUMBER .'' . ': '.$novalnetInfo->order_no);
-        $contents[] = array('text' =>  '' . NOVALNET_TRANSACTION_ID .'' . ': '.$novalnetInfo->tid);
-        $contents[] = array('text' =>  '' . TABLE_HEADING_AMOUNT .'' . ': '.$novalnetInfo->amount);
-        $contents[] = array('text' =>  '' . TABLE_HEADING_CURRENCY .'' . ': '.$novalnetInfo->currency);
-        $contents[] = array('text' =>  '' . NOVALNET_PAYMENT_TYPE .'' . ': '.$novalnetInfo->payment_type);  
-        $contents[] = array('text' =>  '' . NOVALNET_REFUND_AMOUNT .'' . ': '.$novalnetInfo->refund_amount);   
-        $contents[] = array('text' =>  '' . NOVALNET_CALLBACK_AMOUNT .'' . ': '.$novalnetInfo->callback_amount); 
-        
-        $contents[] = array('align' => 'center', 'text' => '<a href="' . zen_href_link(FILENAME_ORDERS, zen_get_all_get_params(array('novalnetId', 'action')) . 'oID=' . $novalnetInfo->order_no .'&' . 'novalnetID=' . $novalnetInfo->id .'&action=edit' . '&referer=novalnet') . '">' . NOVALNET_VIEW_ORDER. '</a>');
+        $contents[] = array('text' =>  '' . NOVALNET_REFERENCE_ID .'' . ': '.$novalnetInfo->tid);
+        $contents[] = array('text' =>  '' . TABLE_HEADING_AMOUNT .'' . ': '.$currencies->format(($novalnetInfo->amount / 100), 1, $novalnetInfo->currency));
+        $contents[] = array('text' =>  '' . NOVALNET_PAYMENT_TYPE .'' . ': '.$novalnetInfo->payment_method);
+        if (!empty($novalnetInfo->refund_amount))
+        $contents[] = array('text' =>  '' . NOVALNET_REFUND_AMOUNT .'' . ': '.$currencies->format(($novalnetInfo->refund_amount / 100), 1, $novalnetInfo->currency));
+        if (!empty($novalnetInfo->callback_amount))
+        $contents[] = array('text' =>  '' . NOVALNET_CALLBACK_AMOUNT .'' . ': '.$currencies->format(($novalnetInfo->callback_amount / 100), 1, $novalnetInfo->currency));
+      
+        $count = 1;
+
+			$contents[] = array('text' =>  '</table>');
+		break;
+
+		case 'DEACTIVATED':
+
+		require_once(DIR_WS_CLASSES . 'order.php');
+
+		$order = new order($novalnetInfo->order_no);
+        $heading[] = array('text' => '<strong>' . TEXT_INFO_NOVALNET_RESPONSE_BEGIN.'#'.$novalnetInfo->id.' '.TEXT_INFO_NOVALNET_RESPONSE_END.'#'. $novalnetInfo->order_no . '</strong>');     
+        $contents[] = array('text' =>  '' . TABLE_HEADING_ORDER_NUMBER .'' . ': '.$novalnetInfo->order_no);
+        $contents[] = array('text' =>  '' . NOVALNET_REFERENCE_ID .'' . ': '.$novalnetInfo->tid);
+        $contents[] = array('text' =>  '' . TABLE_HEADING_AMOUNT .'' . ': '.$currencies->format(($novalnetInfo->amount / 100), 1, $novalnetInfo->currency));      
+        $contents[] = array('text' =>  '' . NOVALNET_PAYMENT_TYPE .'' . ': '.$novalnetInfo->payment_method);
+        if (!empty($novalnetInfo->refund_amount))  
+        $contents[] = array('text' =>  '' . NOVALNET_REFUND_AMOUNT .'' . ': '.$currencies->format(($novalnetInfo->refund_amount / 100), 1, $novalnetInfo->currency));  
+        if (!empty($novalnetInfo->callback_amount)) 
+        $contents[] = array('text' =>  '' . NOVALNET_CALLBACK_AMOUNT .'' . ': '.$currencies->format(($novalnetInfo->callback_amount / 100), 1, $novalnetInfo->currency));  
+              
         $count = 1;
 		  
 			$contents[] = array('text' =>  '</table>');
 		break;
 		
-
 		default:
         $heading[] = array('text' => '');
         $contents[] = array('text'=> '' );

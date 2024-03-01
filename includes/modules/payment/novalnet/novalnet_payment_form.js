@@ -19,13 +19,15 @@ jQuery(document).ready(function () {
     });
 
     const paymentFormRequestObj = {
-        iframe: '#novalnetPaymentIframe',
+        iframe: '#novalnet_iframe',
         initForm : {
             orderInformation : {
                 lineItems: order_info,
                 billing: {},
+                labelText: jQuery("#nn_wallet_total_label").val()
             },
             uncheckPayments: true,
+            setWalletPending: true,
             showButton : false
         }
     };

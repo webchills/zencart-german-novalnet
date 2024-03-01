@@ -29,7 +29,7 @@ jQuery(document).ready(function () {
         }
     }).change();
 
-    jQuery('#novalnet_signature').closest('form').submit(function (event) {
+    jQuery('#novalnet_signature, #novalnet_access_key').closest('form').submit(function (event) {
         if (jQuery('#novalnet_signature').val() == '') {
             event.preventDefault();
             alert(jQuery('#merchant_credentials_error').val());

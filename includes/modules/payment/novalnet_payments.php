@@ -1,7 +1,7 @@
 <?php
 /**
  * Novalnet payment module
- * modified for Zen Cart German 1.5.7 by webchills (www.webchills.at)
+ * 
  * This script is used for processing payments in Novalnet
  *
  * @author     Novalnet AG
@@ -65,7 +65,7 @@ class novalnet_payments extends base
     {
         $this->code        = 'novalnet_payments';
         $this->enabled     = (defined('MODULE_PAYMENT_NOVALNET_STATUS') && MODULE_PAYMENT_NOVALNET_STATUS == 'True');
-        $this->sort_order  = defined('MODULE_PAYMENT_NOVALNET_SORT_ORDER') ? MODULE_PAYMENT_NOVALNET_SORT_ORDER : null;	      
+        $this->sort_order  = 0;
         $this->title       = defined('MODULE_PAYMENT_NOVALNET_CONFIG_TEXT_TITLE') ? MODULE_PAYMENT_NOVALNET_CONFIG_TEXT_TITLE : '';
         $this->description = defined('MODULE_PAYMENT_NOVALNET_CONFIG_TEXT_DESCRIPTION') ? MODULE_PAYMENT_NOVALNET_CONFIG_TEXT_DESCRIPTION :'';
     }
@@ -89,16 +89,13 @@ class novalnet_payments extends base
     function check()
     {
         global $db;
-
         if (!isset($this->_check)) {
             $check_query = $db->Execute("select configuration_value from ".TABLE_CONFIGURATION." where configuration_key = 'MODULE_PAYMENT_NOVALNET_STATUS'");
             $this->_check = $check_query->RecordCount();
         }
-
         if ($this->_check > 0) {
             $this->keys(); // install any missing keys
         }
-
         return $this->_check;
     }
 
@@ -110,8 +107,7 @@ class novalnet_payments extends base
     function selection()
     {
         global $db, $order;
-
-        $theme = $theme = $db->Execute("SELECT template_dir FROM " . TABLE_TEMPLATE_SELECT . " limit 1");
+        $theme = $db->Execute("SELECT template_dir FROM " . TABLE_TEMPLATE_SELECT . " limit 1");
         $theme_name = !empty($theme->fields['template_dir']) ? $theme->fields['template_dir'] : '';
         $selection = [];
 
@@ -124,13 +120,13 @@ class novalnet_payments extends base
             if ($_SESSION['payment'] == $this->code && !empty($_SESSION['payment'])) {
                 unset($_SESSION['payment']);
             }
-
             return false;
         }
 
         if (defined('MODULE_PAYMENT_NOVALNET_STATUS') && (MODULE_PAYMENT_NOVALNET_STATUS == 'True')) {
             $params = [];
-            NovalnetHelper::buildRequestParams($params, true);
+            NovalnetHelper::buildRequestParams($params);
+            NovalnetHelper::getHostedPageData($params);
             $params['transaction']['system_version'] = NovalnetHelper::getSystemVersion() . '-NNT' . $theme_name;
             $response = NovalnetHelper::sendRequest($params, NovalnetHelper::getActionEndpoint('seamless_payment'));
 
@@ -140,16 +136,14 @@ class novalnet_payments extends base
                     'module'      => ''
                 ];
                 $selection['fields'][] = ['field' => '
-                                <iframe  style = "width:100%;border: 0;" id = "novalnetPaymentIframe" src = "' . $response['result']['redirect_url'] . '" allow = "payment"></iframe>
+                                <iframe  style = "width:100%;border: 0;" id = "novalnet_iframe" src = "' . $response['result']['redirect_url'] . '" allow = "payment"></iframe>
                                 <script type="text/javascript" src="https://cdn.novalnet.de/js/pv13/checkout.js"></script>
-                                <script src="' . DIR_WS_CATALOG . DIR_WS_MODULES . 'payment/novalnet/novalnet_payment_form.js" type="text/javascript"></script>' .NovalnetHelper::getWalletParam().zen_draw_hidden_field('nn_payment_details', '', 'id="nn_payment_details"')
+                                <script src="' . DIR_WS_CATALOG . DIR_WS_MODULES . 'payment/novalnet/novalnet_payment_form.js" type="text/javascript"></script>' .NovalnetHelper::getWalletParam().zen_draw_hidden_field('nn_payment_details', '', 'id="nn_payment_details"').zen_draw_hidden_field('nn_wallet_total_label', (defined('MODULE_PAYMENT_NOVALNET_WALLET_TOTAL_LABEL') ? MODULE_PAYMENT_NOVALNET_WALLET_TOTAL_LABEL : ''), 'id="nn_wallet_total_label"')
 
                 ];
-
                 return $selection;
             }
         }
-
         return $selection;
     }
 
@@ -214,32 +208,32 @@ class novalnet_payments extends base
         $response = [];
 
         if (isset($post_redirect_response['tid'])) {
-            if ($post_redirect_response['status'] == 'SUCCESS') {
-                if (NovalnetHelper::validateCheckSum($post_redirect_response)) {
+            if ($post_redirect_response['status'] == 'SUCCESS') {   // Success
+                if (NovalnetHelper::validateCheckSum($post_redirect_response)) {    // Checksum success
                     $response = NovalnetHelper::handleRedirectSuccessResponse($post_redirect_response);
-                } else {
+                } else {    // Checksum fail
                     NovalnetHelper::processTempOrderFail($post_redirect_response, MODULE_PAYMENT_NOVALNET_ERROR_MSG);
                 }
-            } else {
+            } else {    // Failure
                 NovalnetHelper::processTempOrderFail($post_redirect_response);
             }
         } else {
             $params = [];
-            NovalnetHelper::buildRequestParams($params);
+            NovalnetHelper::buildRequestParams($params);    // Get request parameters
             $payment_action = !empty($_SESSION['nn_booking_details']->payment_action) ? $_SESSION['nn_booking_details']->payment_action : '';
-            $payment_action = ($payment_action == 'authorized') ? 'authorize' : 'payment';
-            $response = NovalnetHelper::sendRequest($params, NovalnetHelper::getActionEndpoint($payment_action));
+            $payment_action = ($payment_action == 'authorized') ? 'authorize' : 'payment';      // Captue and Authorize transaction
+            $response = NovalnetHelper::sendRequest($params, NovalnetHelper::getActionEndpoint($payment_action));   // Send params to Novalnet server
             if ($response['result']['status'] == 'SUCCESS') {
-                if (!empty($response['result']['redirect_url'])) {
+                if (!empty($response['result']['redirect_url'])) {    // For redirect payments handling
                     $_SESSION['nn_txn_secret'] = $response['transaction']['txn_secret'];
                     zen_redirect($response['result']['redirect_url']);
                 }
             } else {
                 $_SESSION['nn_response'] = $response;
-                NovalnetHelper::processTempOrderFail($response);
+                NovalnetHelper::processTempOrderFail($response);    // Failure response handling
             }
         }
-
+		
         $_SESSION['nn_response'] = $response;
         $order->info['comments'] .= NovalnetHelper::insertTransactionDetails($_SESSION['nn_response']);
     }
@@ -290,16 +284,14 @@ class novalnet_payments extends base
         $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('Payment access key', 'MODULE_PAYMENT_NOVALNET_ACCESS_KEY', '', 'Get your Payment access key from the <a href=https://admin.novalnet.de target=_blank style=text-decoration: underline; font-weight: bold; color:#0080c9;>Novalnet Admin Portal</a> Project > Choose your project > API credentials >Payment access key', '6', '0', now())");
         $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('Select tariff ID.', 'MODULE_PAYMENT_NOVALNET_TARIFF_ID', '', 'Select a Tariff ID to match the preferred tariff plan you created at the Novalnet Admin Portal for this project', '6', '0', now())");
         $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order,set_function, date_added) VALUES ('Display payment method', 'MODULE_PAYMENT_NOVALNET_STATUS', 'False', 'Do you want to display payments via Novalnet?', '6', '0', 'zen_cfg_select_option(array(\'True\', \'False\'), ', now())");
-	      $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) values ('Sort order of display.', 'MODULE_PAYMENT_NOVALNET_SORT_ORDER', '0', 'Sort order of display. Lowest is displayed first.', '6', '1', now())");
         $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order,set_function, date_added) VALUES ('<h2>Notification / Webhook URL Setup</h2>Allow manual testing of the Notification / Webhook URL', 'MODULE_PAYMENT_NOVALNET_CALLBACK_TEST_MODE', 'False', 'Enable this to test the Novalnet Notification / Webhook URL manually. Disable this before setting your shop live to block unauthorized calls from external parties', '6', '0', 'zen_cfg_select_option(array(\'True\', \'False\'), ', now())");
         $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order, date_added) VALUES ('<script src=../includes/modules/payment/novalnet/novalnet_auto_config.js type=text/javascript></script><input type=button id=webhook_url_button style=font-weight:bold;color:#0080c9 value=Configure> <br> Send e-mail to', 'MODULE_PAYMENT_NOVALNET_CALLBACK_MAIL_TO', '', 'Notification / Webhook URL execution messages will be sent to this e-mail', '6', '0', now())");
         $db->Execute("insert into " . TABLE_CONFIGURATION . " (configuration_title, configuration_key, configuration_value, configuration_description, configuration_group_id, sort_order,set_function, use_function, date_added) VALUES ('Notification / Webhook URL', 'MODULE_PAYMENT_NOVALNET_CALLBACK_URL', '" . ((defined('ENABLE_SSL_CATALOG') && ENABLE_SSL_CATALOG === true) ? HTTPS_SERVER : HTTP_SERVER ) .DIR_WS_CATALOG. 'extras/novalnet_callback.php' . "', 'Notification / Webhook URL is required to keep the merchant’s database/system synchronized with the Novalnet account (e.g. delivery status). Refer the Installation Guide for more information', '6', '0','','', now())");
-        // www.zen-cart-pro.at german admin languages_id==43 START
+      // www.zen-cart-pro.at german admin languages_id==43 START
         $db->Execute("replace into " . TABLE_CONFIGURATION_LANGUAGE   . " (configuration_title, configuration_key, configuration_language_id, configuration_description, date_added) values ('Aktivierungsschlüssel des Produkts', 'MODULE_PAYMENT_NOVALNET_PUBLIC_KEY', '43', 'Ihren Produktaktivierungsschlüssel finden Sie im <a href=https://admin.novalnet.de target=_blank style=text-decoration:underline;font-weight:bold;color:#0080c9>Novalnet Admin-Portal</a> Projekte > Wählen Sie Ihr Projekt > API-Anmeldeinformationen > API-Signatur (Produktaktivierungsschlüssel)', now())");
         $db->Execute("replace into " . TABLE_CONFIGURATION_LANGUAGE   . " (configuration_title, configuration_key, configuration_language_id, configuration_description, date_added) values ('Zahlungs-Zugriffsschlüssel', 'MODULE_PAYMENT_NOVALNET_ACCESS_KEY', '43', 'Ihren Paymentzugriffsschlüssel finden Sie im <a href=https://admin.novalnet.de target=_blank style=text-decoration:underline;font-weight:bold;color:#0080c9>Novalnet Admin-Portal</a> Projekte > Wählen Sie Ihr Projekt > API-Anmeldeinformationen > Paymentzugriffsschlüssel', now())");
         $db->Execute("replace into " . TABLE_CONFIGURATION_LANGUAGE   . " (configuration_title, configuration_key, configuration_language_id, configuration_description, date_added) values ('Auswahl der Tarif-ID', 'MODULE_PAYMENT_NOVALNET_TARIFF_ID', '43', 'Wählen Sie eine Tarif-ID, die dem bevorzugten Tarifplan entspricht, den Sie im Novalnet Admin-Portal für dieses Projekt erstellt haben', now())");
-        $db->Execute("replace into " . TABLE_CONFIGURATION_LANGUAGE   . " (configuration_title, configuration_key, configuration_language_id, configuration_description, date_added) values ('Novalnet aktivieren', 'MODULE_PAYMENT_NOVALNET_STATUS', '43', 'Möchten Sie Zahlungen über Novalnet aktivieren?', now())");
-	      $db->Execute("replace into " . TABLE_CONFIGURATION_LANGUAGE   . " (configuration_title, configuration_key, configuration_language_id, configuration_description, date_added) values ('Sortierreihenfolge', 'MODULE_PAYMENT_NOVALNET_SORT_ORDER', '43', 'An welcher Stelle der Zahlungsarten soll Novalnet angeboten werden? Niedrigste Werte werden zuoberst angezeigt.', now())");  
+        $db->Execute("replace into " . TABLE_CONFIGURATION_LANGUAGE   . " (configuration_title, configuration_key, configuration_language_id, configuration_description, date_added) values ('Zahlungsart anzeigen', 'MODULE_PAYMENT_NOVALNET_STATUS', '43', 'Möchten Sie Zahlungen über Novalnet anzeigen?', now())");
         $db->Execute("replace into " . TABLE_CONFIGURATION_LANGUAGE   . " (configuration_title, configuration_key, configuration_language_id, configuration_description, date_added) values ('<h2>Benachrichtigungs- / Webhook-URL festlegen</h2><br> Manuelles Testen der Benachrichtigungs / Webhook-URL erlauben', 'MODULE_PAYMENT_NOVALNET_CALLBACK_TEST_MODE', '43', 'Aktivieren Sie diese Option, um die Novalnet-Benachrichtigungs-/Webhook-URL manuell zu testen. Deaktivieren Sie die Option, bevor Sie Ihren Shop liveschalten, um unautorisierte Zugriffe von Dritten zu blockieren', now())");
         $db->Execute("replace into " . TABLE_CONFIGURATION_LANGUAGE   . " (configuration_title, configuration_key, configuration_language_id, configuration_description, date_added) values ('Benachrichtigung / Webhook-URL im Novalnet-Verwaltungsportal', 'MODULE_PAYMENT_NOVALNET_CALLBACK_URL', '43', 'Sie müssen die folgende Webhook-URL im <a href=https://admin.novalnet.de target=_blank style=text-decoration:underline;font-weight:bold;color:#0080c9>Novalnet Admin-Portal</a> hinzufügen. Dadurch können Sie Benachrichtigungen über den Transaktionsstatus erhalten', now())");
         $db->Execute("replace into " . TABLE_CONFIGURATION_LANGUAGE   . " (configuration_title, configuration_key, configuration_language_id, configuration_description, date_added) values ('<script src=../includes/modules/payment/novalnet/novalnet_auto_config.js type=text/javascript></script><input type=button id=webhook_url_button style=font-weight:bold;color:#0080c9 value=Konfigurieren> <br> E-Mails senden an', 'MODULE_PAYMENT_NOVALNET_CALLBACK_MAIL_TO', '43', 'E-Mail-Benachrichtigungen werden an diese E-Mail-Adresse gesendet', now())");
@@ -314,8 +306,7 @@ class novalnet_payments extends base
     {
         global $db;
         $db->Execute("DELETE FROM " . TABLE_CONFIGURATION . " WHERE configuration_key LIKE 'MODULE\_PAYMENT\_NOVALNET\_%'");
-        $db->Execute("DELETE FROM " . TABLE_CONFIGURATION_LANGUAGE . " WHERE configuration_key LIKE 'MODULE\_PAYMENT\_NOVALNET\_%'");
-	$db->Execute("DELETE FROM ".TABLE_ORDERS_STATUS." WHERE orders_status_name LIKE '%Novalnet%'");
+        $db->Execute("DELETE FROM ".TABLE_ORDERS_STATUS." WHERE orders_status_name LIKE '%Novalnet%'");
     }
 
     /**
@@ -334,7 +325,6 @@ class novalnet_payments extends base
               
         return array (
             'MODULE_PAYMENT_NOVALNET_STATUS',
-	          'MODULE_PAYMENT_NOVALNET_SORT_ORDER',
             'MODULE_PAYMENT_NOVALNET_PUBLIC_KEY',
             'MODULE_PAYMENT_NOVALNET_ACCESS_KEY',
             'MODULE_PAYMENT_NOVALNET_TARIFF_ID',
@@ -360,7 +350,6 @@ class novalnet_payments extends base
                 $db->Execute($sql);
             }
         }
-
         return $this->createNovalnetOrderStatus();
     }
 
@@ -396,7 +385,6 @@ class novalnet_payments extends base
                 }
             }
         }
-
         return true;
     }
 
@@ -408,17 +396,16 @@ class novalnet_payments extends base
     */
     function admin_notification($zf_order_id)
     {
-        global $db, $currencies;
+        global $db, $currencies,$order;
         $output = '';
-
+		
         if (defined('MODULE_PAYMENT_NOVALNET_STATUS') && MODULE_PAYMENT_NOVALNET_STATUS == 'True') {
             $transaction_details = NovalnetHelper::getNovalnetTransDetails($zf_order_id);
 
             if ($transaction_details->RecordCount()) {
-                $payment_type = $transaction_details->fields['payment_type'];
+                $payment_details = !empty($transaction_details->fields['payment_details']) ? json_decode($transaction_details->fields['payment_details'], true) : [];
                 if (($transaction_details->fields['amount'] == 0 &&
-                    in_array($payment_type, array('CREDITCARD','DIRECT_DEBIT_SEPA')) &&
-                    $transaction_details->fields['status'] == 'CONFIRMED') ||
+                    isset($payment_details['zero_amount_booking'])) ||
                     (!empty($transaction_details->fields['instalment_cycle_details']))
                 ) {
                     require(DIR_FS_CATALOG . DIR_WS_MODULES . 'payment/novalnet/novalnet_extension.php');
@@ -435,7 +422,7 @@ class novalnet_payments extends base
 
     function _doRefund($oID)
     {
-        global $messageStack, $db, $currencies;
+        global $messageStack, $db, $currencies, $order;
         $data = [];
         $request = $_REQUEST;
         $txn_details = NovalnetHelper::getNovalnetTransDetails($oID);
@@ -463,8 +450,8 @@ class novalnet_payments extends base
 
                 if ($response['result']['status'] == 'SUCCESS') {
                     $refunded_amount = $response['transaction']['refund']['amount'];
-                    if (in_array($response['transaction']['payment_type'], array('INSTALMENT_INVOICE','INSTALMENT_DIRECT_DEBIT_SEPA'))) {
-                        $instalment_details = (!empty($txn_details->fields['instalment_cycle_details'])) ? json_decode($txn_details->fields['instalment_cycle_details'], true) : [];
+                    if (!empty($txn_details->fields['instalment_cycle_details'])) {
+                        $instalment_details = json_decode($txn_details->fields['instalment_cycle_details'], true);
 
                         if (!empty($instalment_details)) {
                             $cycle = $request['instalment_cycle'];
@@ -483,7 +470,7 @@ class novalnet_payments extends base
                     }
 
                     $update_data['refund_amount'] = (!empty($txn_details->fields['refund_amount'])) ? ($refunded_amount + $txn_details->fields['refund_amount']) : $refunded_amount;
-                    $message = PHP_EOL. sprintf((MODULE_PAYMENT_NOVALNET_REFUND_PARENT_TID_MSG), $txn_details->fields['tid'], $currencies->format(($refunded_amount/100), 1, $txn_details->fields['currency']));
+                    $message = PHP_EOL. sprintf((MODULE_PAYMENT_NOVALNET_REFUND_PARENT_TID_MSG), $txn_details->fields['tid'], $currencies->format(($refunded_amount/100), 1, $order->info['currency']));
                     // Check for refund TID
                     if (!empty($response['transaction']['refund']['tid'])) {
                         $message .= PHP_EOL. sprintf((MODULE_PAYMENT_NOVALNET_REFUND_CHILD_TID_MSG), $response['transaction']['refund']['tid']);
@@ -525,14 +512,10 @@ class novalnet_payments extends base
             ];
 
             $response = NovalnetHelper::sendRequest($data, NovalnetHelper::getActionEndpoint('transaction_cancel'));
-
-            if (isset($response['transaction']['status'])) {
-                $update_data = [
+            if ($response['result']['status'] == 'SUCCESS') {
+				$update_data = [
                     'status' => $response['transaction']['status']
                 ];
-            }
-
-            if ($response['result']['status'] == 'SUCCESS') {
                 $comments .= PHP_EOL.sprintf(MODULE_PAYMENT_NOVALNET_TRANS_DEACTIVATED_MESSAGE, date('d.m.Y', strtotime(date('d.m.Y'))), date('H:i:s'));
                 NovalnetHelper::novalnetUpdateOrderStatus($oID, $comments, NovalnetHelper::getOrderStatusId());
                 $messageStack->add_session($response['result']['status_text'], 'success');
@@ -557,7 +540,6 @@ class novalnet_payments extends base
         $txn_details    = NovalnetHelper::getNovalnetTransDetails($oID);
 
         if ($txn_details->RecordCount()) {
-            $payment_details = !empty($txn_details->fields['payment_details']) ? json_decode($txn_details->fields['payment_details'], true) : [];
             $data = [
                 'transaction' => [
                     'tid' => $txn_details->fields['tid']
@@ -567,30 +549,24 @@ class novalnet_payments extends base
                     'shop_invoked' => 1
                 ]
             ];
-
             $response = NovalnetHelper::sendRequest($data, NovalnetHelper::getActionEndpoint('transaction_capture'));
-
-            if (isset($response['transaction']['status'])) {
-                $update_data = [
+            if ($response['result']['status'] == 'SUCCESS') {
+				$payment_type = $response['transaction']['payment_type'];
+				$update_data = [
                     'status' => $response['transaction']['status'],
                 ];
-            }
-
-            $payment_type = $response['transaction']['payment_type'];
-
-            if ($response['result']['status'] == 'SUCCESS') {
                 $order_status = NovalnetHelper::getOrderStatus($update_data['status'], $payment_type);
                 $comments .= PHP_EOL . sprintf(MODULE_PAYMENT_NOVALNET_TRANS_CONFIRM_SUCCESSFUL_MESSAGE_TEXT, date('d.m.Y', strtotime(date('d.m.Y'))), date('H:i:s')) . PHP_EOL;
                 $comments .= NovalnetHelper::getTransactionDetails($response);
 
-                if (in_array($payment_type, array( 'INSTALMENT_INVOICE','GUARANTEED_INVOICE', 'INVOICE', 'PREPAYMENT'))) {
+                if (in_array($payment_type, array('INSTALMENT_INVOICE','GUARANTEED_INVOICE', 'INVOICE', 'PREPAYMENT'))) {
                     if (empty($response['transaction']['bank_details'])) {
+						$payment_details = !empty($txn_details->fields['payment_details']) ? json_decode($txn_details->fields['payment_details'], true) : [];
                         $response['transaction']['bank_details'] = $payment_details;
                     }
                     $comments .= NovalnetHelper::getBankDetails($response);
                 }
-
-                if (in_array($payment_type, array( 'INSTALMENT_INVOICE','INSTALMENT_DIRECT_DEBIT_SEPA'))) {
+                if (!empty($response['instalment'])) {
                     $comments .= NovalnetHelper::getInstalmentDetails($response);
                     if (in_array($response['transaction']['status'], array('CONFIRMED', 'PENDING'))) {
                         $total_amount = ($txn_details->fields['amount'] < $response['transaction']['amount']) ? $response['transaction']['amount'] : $txn_details->fields['amount'];
@@ -609,7 +585,7 @@ class novalnet_payments extends base
                 $messageStack->add_session($response['result']['status_text'], 'error');
             }
 
-            if (!empty($oID) &&  isset($response['transaction']['status'])) {
+            if (!empty($oID) &&  !empty($update_data)) {
                 zen_db_perform(TABLE_NOVALNET_TRANSACTION_DETAIL, $update_data, 'update', 'order_no='.$oID);
             }
 

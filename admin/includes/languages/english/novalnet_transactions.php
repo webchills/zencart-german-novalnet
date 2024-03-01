@@ -1,7 +1,10 @@
 <?php
 /**
  * Novalnet payment module
- * admin component by webchills (www.webchills.at)
+ *
+ * This script is used for displaying English language of
+ * Novalnet orders in admin component
+ *
  * @author     Novalnet AG
  * @copyright  Copyright (c) Novalnet
  * @license    https://www.novalnet.de/payment-plugins/kostenlos/lizenz
@@ -10,17 +13,17 @@
  * Script : novalnet_transactions.php
  */
 define('HEADING_ADMIN_TITLE', 'Novalnet Transactions');
-define('AMOUNT_INFO', 'Amounts are given in the smallest currency unit e.g. 100 cents = equal to 1.00 Euro');
-define('TABLE_HEADING_ORDER_NUMBER', 'Shop Order Number');
-define('TABLE_HEADING_AMOUNT', 'Amount');
-define('TABLE_HEADING_CURRENCY', 'Currency');
+define('NOVALNET_ADMIN_INFO', 'For more detailed information on each transaction, please visit the Novalnet Admin Portal.');
+define('TABLE_HEADING_ORDER_NUMBER', 'Order Number');
+define('TABLE_HEADING_AMOUNT', 'Order Total');
 define('NOVALNET_REFUND_AMOUNT', 'Refund Amount');
 define('NOVALNET_CALLBACK_AMOUNT', 'Callback Amount');
 define('NOVALNET_PAYMENT_TYPE', 'Payment Method');
-
+define('ICON_PREVIEW', 'Preview');
+define('TABLE_HEADING_CUSTOMERS', 'Customers');
+define('TABLE_HEADING_DATE_PURCHASED', 'Date Purchased');
 define('NOVALNET_REFERENCE_ID', 'Novalnet Transaction ID');
 define('TABLE_HEADING_TRANSACTION_ID', 'ID');
-
 define('TABLE_HEADING_PAYMENT_TYPE', 'Payment Method');
 define('TABLE_HEADING_PAYMENT_STATUS', 'Status');
 define('TABLE_HEADING_PAYMENT_MESSAGE', 'Response');
@@ -33,14 +36,13 @@ define('HEADING_NOVALNET_STATUS', 'Status');
 define('TEXT_NOVALNET_SORT_ORDER_INFO', 'Sort Order');
 define('TEXT_SORT_NOVALNET_ID_DESC', 'Novalnet Sort Order (new-old)');
 define('TEXT_SORT_NOVALNET_ID', 'Novalnet Sort Order (old-new)');
-define('TEXT_SORT_ZEN_ORDER_ID_DESC', 'Shop Order Number (new-old)');
-define('TEXT_SORT_ZEN_ORDER_ID', 'Shop Order Number (old-new)');
-define('TEXT_SORT_NOVALNET_STATUS_DESC', 'Status desc');
-define('TEXT_SORT_NOVALNET_STATUS', 'Status asc');
+define('TEXT_SORT_ZEN_ORDER_ID_DESC', 'Order Number (new-old)');
+define('TEXT_SORT_ZEN_ORDER_ID', 'Order Number (old-new)');
+define('TEXT_SORT_NOVALNET_STATUS_DESC', 'Novalnet Transaction Status desc');
+define('TEXT_SORT_NOVALNET_STATUS', 'Novalnet Transaction Status asc');
 define('TEXT_SORT_NOVALNET_PAYMENT_TYPE_DESC', 'Payment Method desc');
 define('TEXT_SORT_NOVALNET_PAYMENT_TYPE', 'Payment Method asc');
 define('TEXT_SORT_NOVALNET_STATE', 'Status');
 define('TEXT_ALL_IPNS', 'All');
-define('NOVALNET_TRANSACTION_ID', 'Novalnet TID');
-define('NOVALNET_STATUS', 'Status');
+define('NOVALNET_STATUS', 'Novalnet Transaction Status');
 define('NOVALNET_VIEW_ORDER', 'View order');

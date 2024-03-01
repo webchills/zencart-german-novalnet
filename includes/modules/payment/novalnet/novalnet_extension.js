@@ -38,9 +38,13 @@ jQuery(document).ready(function () {
             $("#nn_instalment_cancel").css({"display": "block"});
         }
         if (this.id == 'nn_instacancel_allcycles') {
-            alert($("input[name='nn_insta_allcycles']").val());
+            if (!confirm(jQuery("[name=nn_insta_allcycles]").val())) {
+                return false;
+            }
         } else if (this.id == 'nn_instacancel_remaincycles') {
-            alert($("input[name='nn_insta_remainingcycles']").val());
+            if (!confirm(jQuery("[name=nn_insta_remainingcycles]").val())) {
+                return false;
+            }
         }
     });
 });
@@ -65,24 +69,13 @@ function void_capture_status()
     } else {
         jQuery('#novalnet_status_change').attr('action', url + '&action=doVoid');
     }
-
     return true;
 }
 
 function refund_amount_validation()
 {
-    if (jQuery('#refund_tid') != null) {
-        let refund_ref = $('#refund_tid').val();
-        refund_ref = jQuery.trim(refund_ref);
-        let re = /[\/\\#,+!^()$~%.":*?<>{}]/g;
-
-        if (re.test(refund_ref)) {
-            jQuery('#nn_refund_error').html(jQuery("[name=nn_valid_account]").val());
-            return false;
-        }
-    } else {
+	if (jQuery('#refund_trans_amount').val() != undefined) {
         let amount = jQuery('#refund_trans_amount').val();
-
         if (amount.trim() == '' || amount == 0 || isNaN(amount)) {
             jQuery('#nn_refund_error').html(jQuery("[name=nn_amount_error]").val());
             return false;

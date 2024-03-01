@@ -136,3 +136,5 @@ define('MODULE_PAYMENT_NOVALNET_SHIPPING_LABEL', 'Versand');
 define('MODULE_PAYMENT_NOVALNET_AMOUNT_UPDATE_NOTE', 'Der Transaktionsbetrag %1$s erfolgreich aktualisiert wurde am %2$s');
 define('MODULE_PAYMENT_NOVALNET_DUEDATE_UPDATE_NOTE', ' Fälligkeitsdatum der Transaktion  %1$s erfolgreich aktualisiert wurde am %2$s');
 define('MODULE_PAYMENT_NOVALNET_AMOUNT_DUEDATE_UPDATE_NOTE', 'der Transaktion Betrag %1$s und Fälligkeitsdatum %2$s wurde erfolgreich aktualisiert auf %3$s');
+define('MODULE_PAYMENT_NOVALNET_BARZAHLEN_SUCCESS_BUTTON', 'Bezahlen mit Barzahlen');
+define('MODULE_PAYMENT_NOVALNET_WALLET_TOTAL_LABEL', 'Geschätzter Gesamtbetrag (Keine Angebote angewendet)');
