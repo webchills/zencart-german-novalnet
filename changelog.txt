@@ -1,0 +1,46 @@
+*** Changelog ***
+
+= 13.2.0 - 2023.03.15 =
+* New - Implemented Novalnet Transaction Overview in the shop admin area
+* New - Barzahlen/viacash payment slip implemented on the payment success page
+* Fix - setPaymentPending parameter implemented for Apple Pay and Google Pay to avoid amount mismatch
+* Fix - Constant value is used for table novalnet_transaction_detail
+* Enhanced - Payment module has been optimized as per the new testcase
+
+= 13.0.1 - 2023.03.29 =
+* Fix - Code structures optimized to match Zen Cart coding standards
+
+= 13.0.1 - 2023.03.07 =
+* Fix - Transaction amount mismatch for PayPal payment
+* Fix - Adjusted payment module for standard Instalment cancellation process
+* Enhanced - Payment module has been updated for Zen Cart 1.5.7f German version
+
+= 13.0.0 - 2023.02.17 =
+Major version release: We've improved the seamless customer experience and brand configurations in the Novalnet Merchant Admin Portal to make it easier to preview and customise the checkout page
+
+= 2.0.0 - 2020.10.01 =
+* New - Implemented Guaranteed Direct Debit SEPA, Guaranteed Invoice, Instalment by Direct Debit SEPA, Instalment by Invoice, Barzahlen, Giropay, Eps, Przelewy24, PostFinace Card and PostFinance E-Finance Payments
+* New - Force 3D secure process has been implemented as per predefined filters and settings in the Novalnet admin portal
+* Enhanced - Implemented new encryption method for redirect payments
+* Enhanced - Credit Card iframe has been optimized
+* Enhanced - Auto configuration call perform via cURL method
+* Enhanced -  Adjusted the payment module for IPV6 condition
+* Enhanced - On-hold transaction configuration has been implemented for Credit Card, Direct Debit SEPA, Guaranteed Direct Debit SEPA, Invoice, Guaranteed Invoice, Instalment by Direct Debit SEPA, Instalment by Invoice and PayPal.
+* Enhanced - Callback has been optimized as per the new testcase
+* Fix - Compatible for Zen Cart 1.5.7	
+
+= 1.0.2 - 2013.01.02 =
+- Optimized all novalnet payment modules as per new testcase document.
+- Developed Novalnet Ideal Payment Module
+
+= 1.0.1 - 2012.01.12 =
+- Implement the Novalnet paypal payment method and CALLBACK SCRIPT file.
+- Add call back testing method in readme file.
+
+= 1.0.0 - 2011.12.15
+- Readme File(Specification Details included). 
+- Zencart Payment Module Installation Guide (PDF included)
+- update_info File included.
+- Check hash implemented in PCI payment modules and include
+- Post back Params (Order no., Invoice Reference).
+- Iframe implemented for Credit Card Payment method.

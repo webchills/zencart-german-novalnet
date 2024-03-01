@@ -12,28 +12,26 @@
  */
 
 require_once(__DIR__ . '/includes/modules/payment/novalnet/NovalnetHelper.php');
-$signature = $_REQUEST['signature'];
-$access_key = $_REQUEST['access_key'];
+$request = $_REQUEST;
 
-if (!empty($signature) && !empty($access_key)) {
-    $action = $_REQUEST['action'];
+if (!empty($request['signature']) && !empty($request['access_key'])) {
+    $action = $request['action'];
     $data = [
         'merchant' => [
-            'signature' => $signature,
+            'signature' => $request['signature'],
         ],
         'custom' => [
-            'lang' => (isset($_REQUEST['lang'])) ? strtoupper($_REQUEST['lang']) : 'DE',
+            'lang' => (isset($request['lang'])) ? strtoupper($request['lang']) : 'DE',
         ]
     ];
 
     if ($action == 'webhook_configure') {
         $data['webhook'] = [
-            'url' => $_REQUEST['webhook_url']
+            'url' => $request['webhook_url']
         ];
     }
 
-    $endpoint = NovalnetHelper::getActionEndpoint($action);
-    $response = NovalnetHelper::sendRequest($data, $endpoint, $access_key);
+    $response = NovalnetHelper::sendRequest($data, NovalnetHelper::getActionEndpoint($action), $request['access_key']);
     $response = !empty($response) ? json_encode($response) : '{}';
     echo $response;
     exit();
