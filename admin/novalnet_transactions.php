@@ -8,6 +8,7 @@
  * @link       https://www.novalnet.de
  *
  * Script : novalnet_transactions.php
+ * modified for Zen Cart German 1.5.7h - 2024-03-02 webchills
  */
 
   require('includes/application_top.php');
