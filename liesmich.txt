@@ -1,0 +1,18 @@
+Novalnet Zahlungsmodul für Zen Cart 1.5.7 deutsch
+
+Installation:
+Den Ordner DEINADMIN im Ordner NEUE DATEIEN auf den Namen Ihres Adminverzeichnisses umbenennen.
+Dann den Inhalt des Ordners NEUE DATEIEN in der vorgegebenen Struktur ins Shopverzeichnis hochladen.
+Dabei werden keine bestehenden Dateien überschrieben
+
+Unter Module > Zahlungsarten das Modul novalnet_payments installieren.
+
+In Ihrem Novalnet Admin Portal finden Sie Aktivierungsschlüssel und Zahlungs Zugriffsschlüssel.
+Tragen Sie diese in der Modulkonfiguration ein.
+
+Die Konfiguration der Zahlungsarten, die Sie via Novalnet anbieten wollen, erfolgt vollständig in Ihrem Novalnet Admin Portal, in Zen Cart sind dazu keinerlei Einstellungen nötig/möglich.
+Wenn Sie das Novalnet Modul aktivieren werden im Bestellablauf genau die Zahlungsarten im Shop erscheinen, die Sie bei Novalnet entsprechend konfiguriert haben.
+
+Unter Kunden > Novalnet Transaktionen finden Sie später im Shop eine Übersicht der per Novalnet bezahlten Bestellungen.
+
+Rückerstattungen sind via Shopadministration möglich.
