@@ -1,0 +1,24 @@
+.supportinfo {
+font-size: 13px;
+margin: 0 0 20px 0;
+padding:0
+}
+.supportinfo a {
+font-size: 13px;
+}
+
+.supportinfo a:hover {
+font-size: 13px;
+color:#E47B3A;
+}
+
+#novalnetsorter{
+width:700px;
+height:50px;
+float:right;
+margin:-20px 5px 0px 10px;
+}
+
+#novalnetsorter select{
+font-size: 13px;
+}

@@ -8,7 +8,7 @@
  * @link       https://www.novalnet.de
  *
  * Script : novalnet_transactions.php
- * modified for Zen Cart German 1.5.7h - 2024-03-02 webchills
+ * modified for Zen Cart German 1.5.7h - 2024-03-07 webchills
  */
 
   require('includes/application_top.php');
@@ -71,31 +71,7 @@
 <!doctype html>
 <html <?php echo HTML_PARAMS; ?>>
 <head>
-    <?php require DIR_WS_INCLUDES . 'admin_html_head.php'; ?>
-    <style>
-.supportinfo {
-font-size: 13px;
-margin: 0 0 20px 0;
-padding:0
-}
-.supportinfo a {
-font-size: 13px;
-
-}
-#btlogo{
-width:172px;
-height:40px;
-float:right;
-margin:5px 5px 5px 40px;
-}
-#btsorter{
-width:600px;
-height:50px;
-float:right;
-margin:-50px 5px 0px 10px;
-}
-</style>
-
+<?php require DIR_WS_INCLUDES . 'admin_html_head.php'; ?>
 </head>
 <body>
     <!-- header //-->
@@ -106,7 +82,7 @@ margin:-50px 5px 0px 10px;
     <h1><?php echo HEADING_ADMIN_TITLE; ?></h1>
     <!-- only show if the Novalnet module is installed //-->
 <?php  if (defined('MODULE_PAYMENT_NOVALNET_STATUS')) { ?>
-<span id="btsorter"><?php
+<span id="novalnetsorter"><?php
   $hidden_field = (isset($_GET['novalnet_sort_order'])) ? zen_draw_hidden_field('novalnet_sort_order', $_GET['novalnet_sort_order']) : '';
   echo zen_draw_form('novalnet_status', FILENAME_NOVALNET_TRANSACTIONS, '', 'get') . HEADING_NOVALNET_STATUS . ' ' . zen_draw_pull_down_menu('novalnet_status', array_merge([['id' => '', 'text' => TEXT_ALL_IPNS]], $novalnet_statuses), $selected_status, 'onchange="this.form.submit();"') . zen_hide_session_id() . $hidden_field . '</form>';
   $hidden_field = (isset($_GET['novalnet_status'])) ? zen_draw_hidden_field('novalnet_status', $_GET['novalnet_status']) : '';
