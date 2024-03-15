@@ -20,8 +20,8 @@ define('MODULE_PAYMENT_NOVALNET_VALID_MERCHANT_CREDENTIALS_ERROR', 'Bitte fülle
 define('MODULE_PAYMENT_NOVALNET_CONFIG_TEXT_TITLE', 'Novalnet API-Konfiguration');
 define('MODULE_PAYMENT_NOVALNET_CONFIG_TEXT_DESCRIPTION', '<span style="font-weight: bold; color:#878787;">Bevor Sie beginnen, lesen Sie bitte die Installationsanleitung und melden Sie sich mit Ihrem Händlerkonto im <a href="https://admin.novalnet.de" target="_blank" style="text-decoration: underline; font-weight: bold; color:#0080c9;">Novalnet Admin-Portal</a> an. Um ein Händlerkonto zu erhalten, senden Sie bitte eine E-Mail an <a style="font-weight: bold; color:#0080c9;" href="mailto:sales@novalnet.de">sales@novalnet.de</a> oder rufen Sie uns unter +49 89 923068320 an</span><br/><br/><span style="font-weight: bold; color:#878787;">Die Konfigurationen der Zahlungsplugins sind jetzt im <a href="https://admin.novalnet.de" target="_blank" style="text-decoration: underline; font-weight: bold; color:#0080c9;">Novalnet Admin-Portal</a> verfügbar. Navigieren Sie zu Konto -> Konfiguration des Shops Ihrer Projekte, um sie zu konfigurieren.</span><br/><br/><span style="font-weight: bold; color:#878787;">Novalnet ermöglicht es Ihnen, das Verhalten der Zahlungsmethode zu überprüfen, bevor Sie in den Produktionsmodus gehen, indem Sie Testzahlungsdaten verwenden. Zugang zu den Novalnet-Testzahlungsdaten finden Sie <a href="https://developer.novalnet.de/testing" target="_blank"> hier </a> </span>');
 define('MODULE_PAYMENT_NOVALNET_AMOUNT_TRANSFER_NOTE', 'Bitte überweisen Sie den Betrag %s auf das folgende Konto.');
-define('MODULE_PAYMENT_NOVALNET_INSTALMENT_AMOUNT_TRANSFER_NOTE_DUE_DATE', 'Bitte überweisen Sie den anzahl der raten von %1$s spätestens bis zum %2$s auf das folgende Konto');
-define('MODULE_PAYMENT_NOVALNET_INSTALMENT_AMOUNT_TRANSFER_NOTE', 'Bitte überweisen Sie den anzahl der raten %1$s auf das folgende Konto.');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_AMOUNT_TRANSFER_NOTE_DUE_DATE', 'Bitte überweisen Sie die Anzahl der Raten von %1$s spätestens bis zum %2$s auf das folgende Konto');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_AMOUNT_TRANSFER_NOTE', 'Bitte überweisen Sie die Anzahl der Raten %1$s auf das folgende Konto.');
 define('MODULE_PAYMENT_NOVALNET_MULTIBANCO_NOTE', 'Bitte verwenden Sie die folgende Zahlungsreferenz, um den Betrag von %s an einem Multibanco-Geldautomaten oder über Ihr Onlinebanking zu bezahlen.');
 define('MODULE_PAYMENT_NOVALNET_AMOUNT_TRANSFER_NOTE_DUE_DATE', 'Bitte überweisen Sie den Betrag von %1$s spätestens bis zum %2$s auf das folgende Konto');
 define('MODULE_PAYMENT_NOVALNET_BANK_NAME', 'Bank: ');
@@ -98,7 +98,7 @@ define('MODULE_PAYMENT_NOVALNET_INSTALMENT_STATUS_PENDING', 'Ausstehend');
 define('MODULE_PAYMENT_NOVALNET_INSTALMENT_STATUS_REFUNDED', 'Rückerstattet');
 define('MODULE_PAYMENT_NOVALNET_INSTALMENT_STATUS_CANCELED', 'Abgesagt');
 
-define('MODULE_PAYMENT_NOVALNET_BOOK_TITLE', 'Transaktion durchf&uuml;hren');
+define('MODULE_PAYMENT_NOVALNET_BOOK_TITLE', 'Transaktion durchführen');
 define('MODULE_PAYMENT_NOVALNET_BOOK_AMT_TITLE', 'Buchungsbetrag der Transaktion');
 define('MODULE_PAYMENT_NOVALNET_TRANS_BOOKED_MESSAGE', 'Ihre Bestellung wurde mit einem Betrag von %s gebucht. Ihre neue TID für den gebuchten Betrag: %s');
 define('MODULE_PAYMENT_NOVALNET_PAYMENT_ZERO_AMOUNT_BOOK_CONFIRM', 'Sind Sie sich sicher, dass Sie den Bestellbetrag buchen wollen?');
@@ -110,7 +110,7 @@ define('MODULE_PAYMENT_NOVALNET_WALLET_PAYMENT_SUCCESS_TEXT', 'Ihre Bestellung w
 
 define('MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_ALLCYCLES', 'Gesamte Ratenzahlung stornieren');
 define('MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_ALLCYCLES_TEXT', 'Die Ratenzahlung für die TID wurde gekündigt: %1$s am %2$s und die Rückerstattung wurde mit dem Betrag %3$s');
-define('MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_REMAINING_CYCLES', 'Alle übrigen Installationen abbrechen');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_REMAINING_CYCLES', 'Alle übrigen IZyklen abbrechen');
 define('MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_REMAINING_CYCLES_TEXT', 'Die Ratenzahlung für die TID wurde gestoppt: %1$s um %2$s');
 
 define('MODULE_PAYMENT_NOVALNET_ALLCYCLES_ERROR_MESSAGE', 'Sind Sie sicher, dass Sie alle Zyklen abbrechen wollen?');
@@ -118,7 +118,7 @@ define('MODULE_PAYMENT_NOVALNET_REMAINING_CYCLES_ERROR_MESSAGE', 'Sind Sie siche
 
 define('MODULE_PAYMENT_NOVALNET_ONHOLD_DE_ORDER_STATUS', 'Zahlung autorisiert (Novalnet)');
 define('MODULE_PAYMENT_NOVALNET_CANCELED_DE_ORDER_STATUS', 'Storniert (Novalnet)');
-define('MODULE_PAYMENT_NOVALNET_ORDER_MAIL_SUBJECT', ' Bestellbestätigung - Ihre Bestellung nummer %1$s bei %2$s wurde bestätigt!');
+define('MODULE_PAYMENT_NOVALNET_ORDER_MAIL_SUBJECT', ' Bestellbestätigung - Ihre Bestellung Nummer %1$s bei %2$s wurde bestätigt!');
 define('MODULE_PAYMENT_NOVALNET_ORDER_MAIL_MESSAGE', ' Bestellbestätigung von %s');
 define('MODULE_PAYMENT_NOVALNET_ORDER_MAIL_DATE', 'Datum der Bestellung: %s');
 define('MODULE_PAYMENT_NOVALNET_ORDER_NUMBER', 'Bestellnummer: %s');
@@ -133,8 +133,8 @@ define('MODULE_PAYMENT_NOVALNET_EXCL_TAX_LABEL', 'Exkl.Steuer');
 define('MODULE_PAYMENT_NOVALNET_DISCOUNT_AND_GIFT_VOUCHER_LABEL', 'Rabatt');
 define('MODULE_PAYMENT_NOVALNET_SHIPPING_LABEL', 'Versand');
 
-define('MODULE_PAYMENT_NOVALNET_AMOUNT_UPDATE_NOTE', 'Der Transaktionsbetrag %1$s erfolgreich aktualisiert wurde am %2$s');
-define('MODULE_PAYMENT_NOVALNET_DUEDATE_UPDATE_NOTE', ' Fälligkeitsdatum der Transaktion  %1$s erfolgreich aktualisiert wurde am %2$s');
-define('MODULE_PAYMENT_NOVALNET_AMOUNT_DUEDATE_UPDATE_NOTE', 'der Transaktion Betrag %1$s und Fälligkeitsdatum %2$s wurde erfolgreich aktualisiert auf %3$s');
+define('MODULE_PAYMENT_NOVALNET_AMOUNT_UPDATE_NOTE', 'Der Transaktionsbetrag %1$s wurde erfolgreich aktualisiert am %2$s');
+define('MODULE_PAYMENT_NOVALNET_DUEDATE_UPDATE_NOTE', ' Fälligkeitsdatum der Transaktion  %1$s wurde erfolgreich aktualisiert am %2$s');
+define('MODULE_PAYMENT_NOVALNET_AMOUNT_DUEDATE_UPDATE_NOTE', 'Der Transaktion Betrag %1$s und das Fälligkeitsdatum %2$s wurden erfolgreich aktualisiert auf %3$s');
 define('MODULE_PAYMENT_NOVALNET_BARZAHLEN_SUCCESS_BUTTON', 'Bezahlen mit Barzahlen');
 define('MODULE_PAYMENT_NOVALNET_WALLET_TOTAL_LABEL', 'Geschätzter Gesamtbetrag (Keine Angebote angewendet)');
