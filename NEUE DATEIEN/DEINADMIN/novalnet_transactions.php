@@ -66,7 +66,7 @@
   $novalnet_statuses[0] = array('id' => 'ON_HOLD', 'text' => 'ON_HOLD');
   $novalnet_statuses[1] = array('id' => 'CONFIRMED', 'text' => 'CONFIRMED');
   $novalnet_statuses[2]= array('id' => 'PENDING', 'text' => 'PENDING');
-  $novalnet_statuses[2]= array('id' => 'DEACTIVATED', 'text' => 'DEACTIVATED');
+  $novalnet_statuses[3]= array('id' => 'DEACTIVATED', 'text' => 'DEACTIVATED');
 ?>
 <!doctype html>
 <html <?php echo HTML_PARAMS; ?>>
@@ -114,13 +114,11 @@
     $novalnet_search = "AND n.status  = :selectedStatus: ";
     $novalnet_search = $db->bindVars($novalnet_search, ':selectedStatus:', $selected_status, 'string');
     switch ($selected_status) {
-      case 'ON_HOLD':
-      case 'CONFIRMED':
-      case 'PENDING':
-      case 'DEACTIVATED':
-      default:
-        $novalnet_query_raw = "SELECT *, o.payment_method, o.customers_id, o.customers_name, o.customers_company, o.date_purchased from `".TABLE_NOVALNET_TRANSACTION_DETAIL."` as n, " .TABLE_ORDERS . " as o  where o.orders_id = n.order_no " . $novalnet_search . $order_by;
-        break;
+      case 'ON_HOLD'    : 
+      case 'CONFIRMED'  :
+      case 'PENDING'    : 
+      case 'DEACTIVATED': $novalnet_query_raw  =  "SELECT * FROM " . TABLE_NOVALNET_TRANSACTION_DETAIL . " AS n LEFT JOIN " . TABLE_ORDERS . " AS o ON o.orders_id = n.order_no WHERE n.status = '" . $selected_status . "'" . $order_by;
+      break;
    }
   } else {
         $novalnet_query_raw = "SELECT * from `".TABLE_NOVALNET_TRANSACTION_DETAIL."` as n left join " .TABLE_ORDERS . " as o on o.orders_id = n.order_no " . $order_by;

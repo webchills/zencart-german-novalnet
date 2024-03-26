@@ -94,6 +94,28 @@ if (defined('MODULE_PAYMENT_NOVALNET_STATUS') && MODULE_PAYMENT_NOVALNET_STATUS 
                 $output .= '<button id="nn_instalment_cancel" class="btn btn-primary" style="display: block;">' . MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_ADMIN_TEXT . '</button>';
             }
 
+            if (in_array('Refunded', $instalment_status)) {
+                foreach ($instalment_status as $status) {
+                if ($status === 'Paid') {
+                        $foundConfirm = true;
+                    }
+                }
+                if($foundConfirm == true){
+                $nn_instacancel_allcycles = 'style="display:block"';
+                }
+            }
+          
+            if ($nn_instalment_canceled == true) {
+                foreach ($instalment_status as $status) {
+                if ($status === 'Paid') {
+                        $foundConfirm = true;
+                    }
+                }
+                if($foundConfirm == true){
+                $output .= '<button id="nn_instalment_cancel" class="btn btn-primary" style="display: block;">' . MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_ADMIN_TEXT . '</button>';
+                $nn_instacancel_remaining = 'style="display:none"';
+                }
+            }
             $output .=  zen_draw_form('nn_instalment_cancel', 'novalnet_extension_helper.php');
             $output .= '<div id= novalnet_instalment_cancel style="display: none;">' ;
             $output .= zen_draw_hidden_field('nn_insta_allcycles', MODULE_PAYMENT_NOVALNET_ALLCYCLES_ERROR_MESSAGE);
@@ -102,11 +124,31 @@ if (defined('MODULE_PAYMENT_NOVALNET_STATUS') && MODULE_PAYMENT_NOVALNET_STATUS 
             $output .= zen_draw_input_field('nn_instacancel_remaincycles', html_entity_decode(MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_REMAINING_CYCLES), 'id="nn_instacancel_remaincycles" class="btn btn-primary" '.$nn_instacancel_remaining, false, 'submit')."&nbsp;";
             $output .= zen_draw_input_field('nn_instacancel_allcycles', html_entity_decode(MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_ALLCYCLES), 'id="nn_instacancel_allcycles" class="btn btn-primary" '.$nn_instacancel_allcycles, false, 'submit');
             $output .= '</div></form></td><td></td></tr>';
-            $output .= '<tr class="dataTableHeadingRow"><td class="dataTableContent">S.No</td><td class="dataTableContent">'.MODULE_PAYMENT_NOVALNET_INSTALMENT_AMOUNT_BACKEND.'</td><td class="dataTableContent">'.MODULE_PAYMENT_NOVALNET_INSTALMENT_NEXT_DATE_BACKEND.'</td><td class="dataTableContent">'.MODULE_PAYMENT_NOVALNET_INSTALMENT_PAID_DATE_BACKEND.'</td><td class="dataTableContent">'.MODULE_PAYMENT_NOVALNET_INSTALMENT_STATUS_BACKEND.'</td><td class="dataTableContent">'.MODULE_PAYMENT_NOVALNET_INSTALMENT_REFERENCE_BACKEND.'</td><td></td></tr>';
+            $output .= '<tr class="dataTableHeadingRow">
+            <td class="dataTableContent">S.No</td>
+            <td class="dataTableContent">'.MODULE_PAYMENT_NOVALNET_INSTALMENT_REFERENCE_BACKEND.'</td>
+            <td class="dataTableContent">'.MODULE_PAYMENT_NOVALNET_INSTALMENT_AMOUNT_BACKEND.'</td>
+            <td class="dataTableContent">'.MODULE_PAYMENT_NOVALNET_INSTALMENT_NEXT_DATE_BACKEND.'</td>
+            <td class="dataTableContent">'.MODULE_PAYMENT_NOVALNET_INSTALMENT_STATUS_BACKEND.'</td>
+            <td class="dataTableContent">'.MODULE_PAYMENT_NOVALNET_INSTALMENT_REFUND_BACKEND.'</td>
+          
+            
+            <td></td></tr>';
             $nn_instalment_table = '';
             $instalment_amount = 0;
             $status = [];
             $sno = 1;
+
+        // Custom sorting function
+        function sortByNextInstalmentDate($a, $b) {
+            // If next_instalment_date is empty or '-', set it to PHP_INT_MAX
+            $instalmentdateA = empty($a['next_instalment_date']) || $a['next_instalment_date'] == '-' ? PHP_INT_MAX : strtotime($a['next_instalment_date']);
+            $instalmentdateB = empty($b['next_instalment_date']) || $b['next_instalment_date'] == '-' ? PHP_INT_MAX : strtotime($b['next_instalment_date']);
+            return $instalmentdateA - $instalmentdateB;
+        }
+              
+                   // Sorting the array using usort
+            usort($instalment_details, 'sortByNextInstalmentDate');
 
             foreach ($instalment_details as $key => $instalment_details_data) {
                 $instalment_amount = (strpos((string) $instalment_details_data['instalment_cycle_amount'], '.')) ? $instalment_details_data['instalment_cycle_amount'] * 100 : $instalment_details_data['instalment_cycle_amount'];
@@ -120,8 +162,14 @@ if (defined('MODULE_PAYMENT_NOVALNET_STATUS') && MODULE_PAYMENT_NOVALNET_STATUS 
                 $status = constant('MODULE_PAYMENT_NOVALNET_INSTALMENT_STATUS_' .  strtoupper($status));
                 $href = (isset($instalment_details_data['reference_tid']) && !empty($instalment_details_data['reference_tid']) != '' && $instalment_amount != '0' && $instalment_amount > 0 && $status != constant('MODULE_PAYMENT_NOVALNET_INSTALMENT_STATUS_REFUNDED')) ? "&nbsp;<button id='nn_refund1' class='btn btn-primary' onclick='novalnetRefundbuttonsHandler($key)'>" . MODULE_PAYMENT_NOVALNET_REFUND_TEXT . "</button>" : '';
                 $instalment_amount_formatted = !empty($instalment_amount) ? $currencies->format($instalment_amount/100, 1, $order->info['currency']) : '-';
-                $nn_instalment_table .= "<tr class='dataTableRow'><td class='dataTableContent'>".$sno++."</td><td class='dataTableContent'>".$instalment_amount_formatted.' '.$href."</td>
-                <td class='dataTableContent'>".(isset($instalment_details_data['next_instalment_date']) ? $instalment_details_data['next_instalment_date'] : '')."</td><td class='dataTableContent'>".(isset($instalment_details_data['paid_date']) ? $instalment_details_data['paid_date'] : '')."</td><td class='dataTableContent'>$status</td><td class='dataTableContent'>".(isset($instalment_details_data['reference_tid']) ? $instalment_details_data['reference_tid'] : '')."</td>";
+                $instalment_original_amount= isset($instalment_details_data['instalment_cycle_amount_orginal_amount']) ? $currencies->format($instalment_details_data['instalment_cycle_amount_orginal_amount']/100, 1, $order->info['currency']) : '';
+
+                $nn_instalment_table .= "<tr class='dataTableRow'><td class='dataTableContent'>".$sno++."</td>
+                <td class='dataTableContent'>".(isset($instalment_details_data['reference_tid']) ? $instalment_details_data['reference_tid'] : '')."</td>
+                <td class='dataTableContent'>".$instalment_original_amount."</td>
+                <td class='dataTableContent'>".(isset($instalment_details_data['next_instalment_date']) && !empty(trim($instalment_details_data['next_instalment_date'])) && trim($instalment_details_data['next_instalment_date']) != "-"  ? NovalnetHelper::format_date( $instalment_details_data['next_instalment_date']) : '').
+                "</td><td class='dataTableContent'>$status</td>
+                <td class='dataTableContent'>".$href."</td>";
                 $nn_instalment_table .= '<td class="dataTableContent">'.zen_draw_form('nn_refund_confirm', 'novalnet_extension_helper.php');
                 $nn_instalment_table .= '<div id= instalment_refund_'.$key.' style="display: none;">' ;
                 $nn_instalment_table .= zen_draw_hidden_field('oID', $request['oID']);

@@ -10,7 +10,7 @@
  * @link       https://www.novalnet.de
  *
  * Script : novalnet_payments.php
- * modified for Zen Cart German 1.5.7h - 2024-03-02 webchills
+ * modified for Zen Cart German 1.5.7h - 2024-03-26 webchills
  */
 
 require_once(DIR_FS_CATALOG . DIR_WS_MODULES.'payment/novalnet/NovalnetHelper.php');
@@ -416,7 +416,7 @@ class novalnet_payments extends base
                 $payment_details = !empty($transaction_details->fields['payment_details']) ? json_decode($transaction_details->fields['payment_details'], true) : [];
                 if (($transaction_details->fields['amount'] == 0 &&
                     isset($payment_details['zero_amount_booking'])) ||
-                    (!empty($transaction_details->fields['instalment_cycle_details']))
+                    (!empty($transaction_details->fields['instalment_cycle_details']) && $transaction_details->fields['instalment_cycle_details'] !== '{}' )
                 ) {
                     require(DIR_FS_CATALOG . DIR_WS_MODULES . 'payment/novalnet/novalnet_extension.php');
                 } else {
@@ -480,10 +480,10 @@ class novalnet_payments extends base
                     }
 
                     $update_data['refund_amount'] = (!empty($txn_details->fields['refund_amount'])) ? ($refunded_amount + $txn_details->fields['refund_amount']) : $refunded_amount;
-                    $message = PHP_EOL. sprintf((MODULE_PAYMENT_NOVALNET_REFUND_PARENT_TID_MSG), $txn_details->fields['tid'], $currencies->format(($refunded_amount/100), 1, $order->info['currency']));
+                    $message = sprintf((MODULE_PAYMENT_NOVALNET_REFUND_PARENT_TID_MSG), $txn_details->fields['tid'], $currencies->format(($refunded_amount/100), 1, $order->info['currency']));
                     // Check for refund TID
                     if (!empty($response['transaction']['refund']['tid'])) {
-                        $message .= PHP_EOL. sprintf((MODULE_PAYMENT_NOVALNET_REFUND_CHILD_TID_MSG), $response['transaction']['refund']['tid']);
+                        $message .= sprintf((MODULE_PAYMENT_NOVALNET_REFUND_CHILD_TID_MSG), $response['transaction']['refund']['tid']);
                     }
 
                     if (!empty($oID)) {
@@ -526,7 +526,7 @@ class novalnet_payments extends base
 				$update_data = [
                     'status' => $response['transaction']['status']
                 ];
-                $comments .= PHP_EOL.sprintf(MODULE_PAYMENT_NOVALNET_TRANS_DEACTIVATED_MESSAGE, date('d.m.Y', strtotime(date('d.m.Y'))), date('H:i:s'));
+                $comments .= sprintf(MODULE_PAYMENT_NOVALNET_TRANS_DEACTIVATED_MESSAGE, date('d.m.Y', strtotime(date('d.m.Y'))), date('H:i:s'));
                 NovalnetHelper::novalnetUpdateOrderStatus($oID, $comments, NovalnetHelper::getOrderStatusId());
                 $messageStack->add_session($response['result']['status_text'], 'success');
             } else {
@@ -566,7 +566,7 @@ class novalnet_payments extends base
                     'status' => $response['transaction']['status'],
                 ];
                 $order_status = NovalnetHelper::getOrderStatus($update_data['status'], $payment_type);
-                $comments .= PHP_EOL . sprintf(MODULE_PAYMENT_NOVALNET_TRANS_CONFIRM_SUCCESSFUL_MESSAGE_TEXT, date('d.m.Y', strtotime(date('d.m.Y'))), date('H:i:s')) . PHP_EOL;
+                $comments .= sprintf(MODULE_PAYMENT_NOVALNET_TRANS_CONFIRM_SUCCESSFUL_MESSAGE_TEXT, date('d.m.Y', strtotime(date('d.m.Y'))), date('H:i:s')) . PHP_EOL;
                 $comments .= NovalnetHelper::getTransactionDetails($response);
 
                 if (in_array($payment_type, array('INSTALMENT_INVOICE','GUARANTEED_INVOICE', 'INVOICE', 'PREPAYMENT'))) {

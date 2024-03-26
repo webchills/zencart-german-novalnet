@@ -67,6 +67,16 @@ class NovalnetHelper
     }
 
     /**
+     * Get shop date formate
+     *
+     * @return $date
+     */
+    public static function format_date($date) {
+        return !empty(trim($date)) && trim($date) != "-" ? (new DateTime($date))->format('d.m.Y H:i:s') : '';
+    }
+    
+
+    /**
      * Get transaction data
      *
      * @return $data
@@ -114,7 +124,14 @@ class NovalnetHelper
             if (!empty($booking_details->due_date)) {
                 $params['transaction']['due_date'] = date("Y-m-d", strtotime('+' . $booking_details->due_date . ' days'));
             }
-
+            if (!empty($booking_details->account_number)) {
+                $params['transaction']['payment_data'] =
+                [
+                    'account_holder' => $booking_details->account_holder,
+                    'account_number' => $booking_details->account_number,
+                    'routing_number' => $booking_details->routing_number,
+                ];
+            }
             if ($params['transaction']['payment_type'] == 'PAYPAL') {
                 self::paypal_sheet_details($params);
             }
@@ -351,7 +368,7 @@ class NovalnetHelper
 
         $articleDetails[] = array(
             'label'=> defined('MODULE_PAYMENT_NOVALNET_SHIPPING_LABEL') ? MODULE_PAYMENT_NOVALNET_SHIPPING_LABEL : '',
-            'amount' => !empty($currency_value) ? (string)(($order->info['shipping_cost'] * $currency_value)*100) :   (string)(($order->info['shipping_cost'])*100),
+            'amount' => !empty($currency_value) ? (string)(round(($order->info['shipping_cost'] * $currency_value),2)*100) :   (string)(round(($order->info['shipping_cost']),2)*100),
             'type' => 'SUBTOTAL'
         );
         return "<input type='hidden' value='". (!empty($articleDetails) ? json_encode($articleDetails) : [])."' id='nn_article_details'>";
@@ -441,7 +458,7 @@ class NovalnetHelper
 
         if (!empty($response['transaction']['partner_payment_reference'])) {
             $amount = $currencies->format($response['transaction']['amount'] / 100, true, $response['transaction']['currency']);
-            $txn_details .= PHP_EOL . PHP_EOL . sprintf(MODULE_PAYMENT_NOVALNET_MULTIBANCO_NOTE, $amount);
+            $txn_details .= PHP_EOL . sprintf(MODULE_PAYMENT_NOVALNET_MULTIBANCO_NOTE, $amount);
             $txn_details .= PHP_EOL . sprintf(MODULE_PAYMENT_NOVALNET_PARTNER_PAYMENT_REFERENCE, $response['transaction']['partner_payment_reference']) . PHP_EOL;
         }
 
@@ -466,12 +483,12 @@ class NovalnetHelper
             $amount = $currencies->format($response['instalment']['cycle_amount']/100, false, $response['transaction']['currency']);
         }
 
-        $note = !empty($response['instalment']['cycle_amount']) ? (PHP_EOL . sprintf(MODULE_PAYMENT_NOVALNET_INSTALMENT_AMOUNT_TRANSFER_NOTE, $amount) . PHP_EOL . PHP_EOL) :
-            (PHP_EOL .PHP_EOL.sprintf(MODULE_PAYMENT_NOVALNET_AMOUNT_TRANSFER_NOTE, $amount) . PHP_EOL .PHP_EOL);
+        $note = !empty($response['instalment']['cycle_amount']) ? (PHP_EOL . sprintf(MODULE_PAYMENT_NOVALNET_INSTALMENT_AMOUNT_TRANSFER_NOTE, $amount) . PHP_EOL) :
+            (PHP_EOL.sprintf(MODULE_PAYMENT_NOVALNET_AMOUNT_TRANSFER_NOTE, $amount) .PHP_EOL);
 
         if ($response['transaction']['status'] != 'ON_HOLD' && !empty($response['transaction']['due_date'])) { // If due date is not empty
-            $note = !empty($response['instalment']['cycle_amount']) ? (PHP_EOL . PHP_EOL.sprintf(MODULE_PAYMENT_NOVALNET_INSTALMENT_AMOUNT_TRANSFER_NOTE_DUE_DATE, $amount, $response ['transaction']['due_date']) . PHP_EOL . PHP_EOL) :
-                (PHP_EOL .PHP_EOL.sprintf(MODULE_PAYMENT_NOVALNET_AMOUNT_TRANSFER_NOTE_DUE_DATE, $amount, $response['transaction']['due_date']) . PHP_EOL .PHP_EOL);
+            $note = !empty($response['instalment']['cycle_amount']) ? ( PHP_EOL.sprintf(MODULE_PAYMENT_NOVALNET_INSTALMENT_AMOUNT_TRANSFER_NOTE_DUE_DATE, $amount, date('d.m.Y', strtotime($response ['transaction']['due_date']))) . PHP_EOL ) :
+                (PHP_EOL.sprintf(MODULE_PAYMENT_NOVALNET_AMOUNT_TRANSFER_NOTE_DUE_DATE, $amount, date('d.m.Y', strtotime($response['transaction']['due_date'])))  .PHP_EOL);
         }
 
         $bank_details = array(
@@ -506,10 +523,10 @@ class NovalnetHelper
         $txn_details = '';
 
         if (!empty($response['transaction']['due_date'])) {
-            $txn_details .= PHP_EOL . PHP_EOL.MODULE_PAYMENT_NOVALNET_TRANS_SLIP_EXPIRY_DATE .date(DATE_FORMAT, strtotime($response['transaction']['due_date']));
+            $txn_details .= PHP_EOL.MODULE_PAYMENT_NOVALNET_TRANS_SLIP_EXPIRY_DATE .date(DATE_FORMAT, strtotime($response['transaction']['due_date']));
         }
 
-        $txn_details .= PHP_EOL . PHP_EOL .MODULE_PAYMENT_NOVALNET_NEAREST_STORE_DETAILS . PHP_EOL ;
+        $txn_details .= PHP_EOL .MODULE_PAYMENT_NOVALNET_NEAREST_STORE_DETAILS ;
 
         if (!empty($response['transaction']['nearest_stores'])) {
             foreach ($response['transaction']['nearest_stores'] as $store) {
@@ -521,7 +538,7 @@ class NovalnetHelper
                     $txn_details .= PHP_EOL . $country_name->fields['countries_name'];
                 }
 
-                $txn_details .= PHP_EOL . PHP_EOL;
+                $txn_details .= PHP_EOL;
             }
         }
 
@@ -543,12 +560,12 @@ class NovalnetHelper
         $amount = $currencies->format($response['instalment']['cycle_amount']/100, false, $response['instalment']['currency']);
 
         if ($response['transaction']['status'] == 'CONFIRMED') {
-            $txn_details .=  PHP_EOL.PHP_EOL.MODULE_PAYMENT_NOVALNET_INSTALMENT_INSTALMENTS_INFO.PHP_EOL.MODULE_PAYMENT_NOVALNET_INSTALMENT_PROCESSED_INSTALMENTS.$response['instalment']['cycles_executed'] . PHP_EOL;
+            $txn_details .= PHP_EOL.MODULE_PAYMENT_NOVALNET_INSTALMENT_INSTALMENTS_INFO.PHP_EOL.MODULE_PAYMENT_NOVALNET_INSTALMENT_PROCESSED_INSTALMENTS.$response['instalment']['cycles_executed'] . PHP_EOL;
             $txn_details .=  MODULE_PAYMENT_NOVALNET_INSTALMENT_DUE_INSTALMENTS.$response['instalment']['pending_cycles']. PHP_EOL;
             $txn_details .=  MODULE_PAYMENT_NOVALNET_INSTALMENT_NEXT_INSTALMENT_AMOUNT.$amount. PHP_EOL;
 
             if (!empty($response['instalment']['next_cycle_date'])) {
-                $txn_details .=  MODULE_PAYMENT_NOVALNET_INSTALMENT_NEXT_INSTALMENT_DATE. date('Y-m-d', strtotime($response['instalment']['next_cycle_date'])). PHP_EOL;
+                $txn_details .=  MODULE_PAYMENT_NOVALNET_INSTALMENT_NEXT_INSTALMENT_DATE. self::format_date($response['instalment']['next_cycle_date']). PHP_EOL;
             }
         }
 
@@ -665,14 +682,19 @@ class NovalnetHelper
 
         foreach ($cycles as $cycle => $cycle_date) {
             $cycle_details[$cycle -1 ]['date'] = $cycle_date;
-            $cycle_details[$cycle -1 ]['next_instalment_date'] = $cycle_date;
+            if (isset($cycles[$cycle + 1])) {
+                $cycle_details[$cycle - 1]['next_instalment_date'] = $cycles[$cycle + 1];  
+            }else{
+                $cycle_details[$cycle - 1]['next_instalment_date'] = "";
+            }
             $cycle_details[$cycle -1 ]['status'] = 'Pending';
             if (!empty($instalment['cycles_executed']) && $cycle == $instalment['cycles_executed']) {
                 $cycle_details[$cycle -1 ]['reference_tid'] = !empty($instalment['tid']) ? $instalment['tid'] : (!empty($response['transaction']['tid']) ? $response['transaction']['tid'] : '');
                 $cycle_details[$cycle -1 ]['status'] = 'Paid';
-                $cycle_details[$cycle -1 ]['paid_date'] = date('Y-m-d H:i:s');
+                $cycle_details[$cycle -1 ]['paid_date'] = date('d.m.Y H:i:s');
             }
             $cycle_details[$cycle -1 ]['instalment_cycle_amount'] = ($cycle == $total_cycles)?$last_cycle_amount : $instalment['cycle_amount'];
+            $cycle_details[$cycle -1 ]['instalment_cycle_amount_orginal_amount'] = ($cycle == $total_cycles)?$last_cycle_amount : $instalment['cycle_amount'];
         }
         return (!empty($cycle_details) ? json_encode($cycle_details) : '{}');
     }
@@ -960,8 +982,8 @@ class NovalnetHelper
         $customer_details = $customer_info->fields;
         $customer_name = $customer_details['customers_name'];
         $email_subject   = sprintf(MODULE_PAYMENT_NOVALNET_ORDER_MAIL_SUBJECT, $order_no, STORE_NAME);
-        $email_content   = sprintf(MODULE_PAYMENT_NOVALNET_ORDER_MAIL_MESSAGE, STORE_NAME). PHP_EOL. PHP_EOL. MODULE_PAYMENT_NOVALNET_CUSTOMER_SALUTATION. '<b>'. $customer_details['customers_name'].PHP_EOL .PHP_EOL. sprintf(MODULE_PAYMENT_NOVALNET_ORDER_NUMBER, $order_no) . PHP_EOL. PHP_EOL. sprintf(MODULE_PAYMENT_NOVALNET_ORDER_MAIL_DATE, strftime(DATE_FORMAT_LONG)).PHP_EOL. PHP_EOL.  MODULE_PAYMENT_NOVALNET_ORDER_CONFIRMATION .zen_href_link(FILENAME_ACCOUNT_HISTORY_INFO, 'order_id=' . $order_no, 'SSL', false) . PHP_EOL . nl2br($comments);
-        $email_content .= PHP_EOL .PHP_EOL.MODULE_PAYMENT_NOVALNET_DELIVERY_ADDRESS. PHP_EOL. $customer_details['delivery_name'] .PHP_EOL .  $customer_details['delivery_street_address'] . PHP_EOL. $customer_details['delivery_postcode'] . PHP_EOL . $customer_details['delivery_city'] . PHP_EOL . $customer_details['delivery_country'] . PHP_EOL;
+        $email_content   = sprintf(MODULE_PAYMENT_NOVALNET_ORDER_MAIL_MESSAGE, STORE_NAME). PHP_EOL. MODULE_PAYMENT_NOVALNET_CUSTOMER_SALUTATION. '<b>'. $customer_details['customers_name'].PHP_EOL .sprintf(MODULE_PAYMENT_NOVALNET_ORDER_NUMBER, $order_no) . PHP_EOL. sprintf(MODULE_PAYMENT_NOVALNET_ORDER_MAIL_DATE, strftime(DATE_FORMAT_LONG)). PHP_EOL.  MODULE_PAYMENT_NOVALNET_ORDER_CONFIRMATION .zen_href_link(FILENAME_ACCOUNT_HISTORY_INFO, 'order_id=' . $order_no, 'SSL', false) . PHP_EOL . nl2br($comments);
+        $email_content .= PHP_EOL.MODULE_PAYMENT_NOVALNET_DELIVERY_ADDRESS. PHP_EOL. $customer_details['delivery_name'] .PHP_EOL .  $customer_details['delivery_street_address'] . PHP_EOL. $customer_details['delivery_postcode'] . PHP_EOL . $customer_details['delivery_city'] . PHP_EOL . $customer_details['delivery_country'] . PHP_EOL;
         $email_content .= PHP_EOL .MODULE_PAYMENT_NOVALNET_BILLING_ADDRESS. PHP_EOL. $customer_details['billing_name'] .PHP_EOL .  $customer_details['billing_street_address'] . PHP_EOL. $customer_details['billing_postcode'] . PHP_EOL . $customer_details['billing_city'] . PHP_EOL . $customer_details['billing_country'] . PHP_EOL;
         zen_mail($customer_name, $customer_details['customers_email_address'], $email_subject, str_replace('</br>', PHP_EOL, $email_content), '', '', array(), '', '', STORE_NAME, EMAIL_FROM);
     }

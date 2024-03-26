@@ -49,7 +49,7 @@ if ($txn_details->RecordCount()) {
         $data['transaction']['payment_data']['token'] = $payment_details['token'];
         $response = NovalnetHelper::sendRequest($data, NovalnetHelper::getActionEndpoint('payment'));
         if ($response['result']['status'] == 'SUCCESS') {
-            $message =  PHP_EOL .PHP_EOL. sprintf(MODULE_PAYMENT_NOVALNET_TRANS_BOOKED_MESSAGE, $currencies->format(($request['book_amount'] / 100), 1, $response['transaction']['currency']), $response['transaction']['tid']) . PHP_EOL;
+            $message = sprintf(MODULE_PAYMENT_NOVALNET_TRANS_BOOKED_MESSAGE, $currencies->format(($request['book_amount'] / 100), 1, $response['transaction']['currency']), $response['transaction']['tid']) . PHP_EOL;
             $update_data = [
                     'amount' => $response['transaction']['amount'],
                     'tid'    => $response['transaction']['tid'],
@@ -65,13 +65,13 @@ if ($txn_details->RecordCount()) {
             $instalment_details = !empty($txn_details->fields['instalment_cycle_details']) ? json_decode($txn_details->fields['instalment_cycle_details'], true) : [];
             foreach ($instalment_details as $cycle => $cycle_details) {
                 $update_data['status'] = 'CONFIRMED';
-                $message = PHP_EOL. sprintf((MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_REMAINING_CYCLES_TEXT), $txn_details->fields['tid'], date('Y-m-d H:i:s'));
+                $message = PHP_EOL. sprintf((MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_REMAINING_CYCLES_TEXT), $txn_details->fields['tid'], date('d.m.Y H:i:s'));
                 if ($cycle_details['status'] == 'Pending') { // Cancel the instalment cycles if its pending
                     $instalment_details[$cycle]['status'] = 'Canceled';
                 }
                 if (!empty($request['nn_instacancel_allcycles'])) { // If instalment all cycle cancel
                     $update_data['status'] = 'DEACTIVATED';
-                    $message = PHP_EOL. sprintf((MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_ALLCYCLES_TEXT), $txn_details->fields['tid'], date('Y-m-d H:i:s'), $currencies->format(($response['transaction']['refund']['amount']/100), 1, $order->info['currency']));
+                    $message = PHP_EOL. sprintf((MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_ALLCYCLES_TEXT), $txn_details->fields['tid'], date('d.m.Y H:i:s'), $currencies->format(($response['transaction']['refund']['amount']/100), 1, $order->info['currency']));
                     if ($cycle_details['status'] == 'Paid') { // Refund the instalment cycles if its paid
                         $instalment_details[$cycle]['status'] = 'Refunded';
                     }
@@ -110,16 +110,16 @@ if ($txn_details->RecordCount()) {
                 }
             }
             $update_data['refund_amount'] = (!empty($txn_details->fields['refund_amount'])) ? ($refunded_amount + $txn_details->fields['refund_amount']) : $refunded_amount;
-            $message = PHP_EOL. sprintf((MODULE_PAYMENT_NOVALNET_REFUND_PARENT_TID_MSG), $txn_details->fields['tid'], $currencies->format(($refunded_amount/100), 1, $order->info['currency']));
+            $message =sprintf((MODULE_PAYMENT_NOVALNET_REFUND_PARENT_TID_MSG), $txn_details->fields['tid'], $currencies->format(($refunded_amount/100), 1, $order->info['currency']));
             // Check for refund TID
             if (!empty($response['transaction']['refund']['tid'])) {
-                $message .= PHP_EOL. sprintf((MODULE_PAYMENT_NOVALNET_REFUND_CHILD_TID_MSG), $response['transaction']['refund']['tid']);
+                $message .= sprintf((MODULE_PAYMENT_NOVALNET_REFUND_CHILD_TID_MSG), $response['transaction']['refund']['tid']);
             }
             $order_status_value = ($update_data['refund_amount'] >= $txn_details->fields['amount']) ? NovalnetHelper::getOrderStatusId() : $current_order_status->fields['orders_status'];
         }
     }
-    zen_db_perform(TABLE_NOVALNET_TRANSACTION_DETAIL, $update_data, 'update', 'order_no='.$request['oID']);
     if ($response['result']['status'] == 'SUCCESS') {
+        zen_db_perform(TABLE_NOVALNET_TRANSACTION_DETAIL, $update_data, 'update', 'order_no='.$request['oID']);
 		$messageStack->add_session($response['result']['status_text'], 'success');
 	} else {
 		$messageStack->add_session($response['result']['status_text'], 'error');

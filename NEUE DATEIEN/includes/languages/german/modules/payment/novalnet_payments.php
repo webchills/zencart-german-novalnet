@@ -34,7 +34,7 @@ define('MODULE_PAYMENT_NOVALNET_BANK_PLACE', 'Ort: ');
 define('MODULE_PAYMENT_NOVALNET_TRANSACTION_ID', 'Novalnet-Transaktions-ID: ');
 define('MODULE_PAYMENT_NOVALNET_TRANS_SLIP_EXPIRY_DATE', 'Verfallsdatum des Zahlscheins: ');
 define('MODULE_PAYMENT_NOVALNET_NEAREST_STORE_DETAILS', 'Barzahlen-Partnerfilialen in Ihrer Nähe: ');
-define('MODULE_PAYMENT_NOVALNET_PAYMENT_REFERENCE_TEXT', 'Bitte verwenden Sie einen der unten angegebenen Verwendungszwecke für die Überweisung. Nur so kann Ihr Geldeingang Ihrer Bestellung zugeordnet werden');
+define('MODULE_PAYMENT_NOVALNET_PAYMENT_REFERENCE_TEXT', 'Bitte verwenden Sie nur den unten angegebenen Verwendungszweck für die Überweisung, da nur so Ihr Geldeingang zugeordnet werden kann:');
 define('MODULE_PAYMENT_NOVALNET_CONFIRM_TEXT', 'Bestätigen');
 define('MODULE_PAYMENT_NOVALNET_REFUND_TEXT', 'Rückerstattung');
 define('MODULE_PAYMENT_NOVALNET_CANCEL_TEXT', 'Stornieren');
@@ -92,7 +92,7 @@ define('MODULE_PAYMENT_NOVALNET_INSTALMENT_NEXT_INSTALMENT_DATE', 'Nächstes Rat
 
 define('MODULE_PAYMENT_NOVALNET_INSTALMENT_PAY_DATE_BACKEND', 'Bezahltes Datum');
 define('MODULE_PAYMENT_NOVALNET_INSTALMENT_NEXT_DATE_BACKEND', 'Ratenzahlung Datum');
-define('MODULE_PAYMENT_NOVALNET_INSTALMENT_PAID_DATE_BACKEND', 'Bezahlt am');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_REFUND_BACKEND', 'Ratenerstattung');
 define('MODULE_PAYMENT_NOVALNET_INSTALMENT_STATUS_PAID', 'Bezahlt');
 define('MODULE_PAYMENT_NOVALNET_INSTALMENT_STATUS_PENDING', 'Ausstehend');
 define('MODULE_PAYMENT_NOVALNET_INSTALMENT_STATUS_REFUNDED', 'Rückerstattet');
@@ -110,7 +110,7 @@ define('MODULE_PAYMENT_NOVALNET_WALLET_PAYMENT_SUCCESS_TEXT', 'Ihre Bestellung w
 
 define('MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_ALLCYCLES', 'Gesamte Ratenzahlung stornieren');
 define('MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_ALLCYCLES_TEXT', 'Die Ratenzahlung für die TID wurde gekündigt: %1$s am %2$s und die Rückerstattung wurde mit dem Betrag %3$s');
-define('MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_REMAINING_CYCLES', 'Alle übrigen IZyklen abbrechen');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_REMAINING_CYCLES', 'Alle übrigen Zyklen abbrechen');
 define('MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_REMAINING_CYCLES_TEXT', 'Die Ratenzahlung für die TID wurde gestoppt: %1$s um %2$s');
 
 define('MODULE_PAYMENT_NOVALNET_ALLCYCLES_ERROR_MESSAGE', 'Sind Sie sicher, dass Sie alle Zyklen abbrechen wollen?');

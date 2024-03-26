@@ -13,16 +13,14 @@
 if (!defined('IS_ADMIN_FLAG')) {
    die('Illegal Access');
  } 
- 
+ $error_messages = array();
 // This file should normally only need to be run once, but if the user hasn't installed the software properly it
 // may need to be run again. Flag tracks the situation
 $can_autodelete = true;
     
 if (function_exists('zen_register_admin_page')) {
    if (!zen_page_key_exists('customersNovalnetTransactions')) {
-   	// Quick sanity check in case user hasn't uploaded a necessary file on which this depends
-		$error_messages = array();
-		
+   	// Quick sanity check in case user hasn't uploaded a necessary file  
 		if (!defined('FILENAME_NOVALNET_TRANSACTIONS')) {
 			$error_messages[] = 'The Novalnet transactions filename define is missing. Please check that the file ' .
 				DIR_WS_INCLUDES . 'extra_datafiles/' . 'novalnet.php has been uploaded.';			
