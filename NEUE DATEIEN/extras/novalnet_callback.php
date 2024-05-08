@@ -10,7 +10,7 @@
  * @link       https://www.novalnet.de
  *
  * File: novalnet_callback.php
- *
+ * critical emails only if transaction successful
  */
 
 chdir('../');
@@ -215,15 +215,15 @@ class NovalnetWebhooks
         $order_details = [];
         $novalnet_order_details = $db->Execute("SELECT * FROM ".TABLE_NOVALNET_TRANSACTION_DETAIL." WHERE tid = '".$this->parent_tid."'");
         $order_number = !empty($novalnet_order_details->fields['order_no']) ? $novalnet_order_details->fields['order_no'] : (!empty($this->event_data['transaction']['order_no']) ? $this->event_data['transaction']['order_no'] : '');
-        // If order number not found in shop and Novalnet
-        if (empty($order_number)) {
-			$this->sentCriticalMail($this->event_data);
-            $this->displayMessage(['message' => 'Order reference not found for the TID '. $this->parent_tid]);
+        // If order number not found in shop but Novalnet transcation was successful
+        if (empty($order_number) && $this->event_data['result']['status'] == 'SUCCESS') {
+			  $this->sentCriticalMail($this->event_data);
+            $this->displayMessage(['message' => 'Bestellung nicht gefunden für TID '. $this->parent_tid]);
         }
         // If the order number at Novalnet and the shop doesn't match
         if (!empty($this->event_data['transaction']['order_no']) && !empty($novalnet_order_details->fields['order_no'])
         && (($this->event_data['transaction']['order_no']) != $novalnet_order_details->fields['order_no'])) {
-            $this->displayMessage(['message' => 'Order reference not matching for the order number '. $order_number]);
+            $this->displayMessage(['message' => 'Die Novalnet Bestellreferenznummer entspricht nicht der Shop Bestellnummer '. $order_number]);
         }
         $shop_order_details = $db->Execute("SELECT order_total, orders_id, orders_status, language_code FROM ".TABLE_ORDERS." WHERE orders_id = '".$novalnet_order_details->fields['order_no']."'");
         $order_lang = $db->Execute("SELECT directory FROM " . TABLE_LANGUAGES . " WHERE code = '" . $shop_order_details->fields['language_code'] ."'");
@@ -647,17 +647,17 @@ class NovalnetWebhooks
      */
     private function sentCriticalMail($data)
     {
-		$subject = 'Critical error on shop system '.STORE_NAME.': order not found for TID: ' . $data['event']['tid'];
+		$subject = 'WICHTIG: Problem mit Novalnet Bestellung bei '.STORE_NAME.': Bestellung trotz erfolgreicher Zahlung nicht angelegt. TID: ' . $data['event']['tid'];
 		$customer_name = $data['customer']['first_name'] . $data['customer']['last_name'];
-        $message = "Dear Store Owner,".PHP_EOL."Please evaluate this transaction and contact our payment module team at Novalnet." .PHP_EOL;
-        $message .= 'Merchant ID: ' . $data['merchant']['vendor'] . PHP_EOL;
-        $message .= 'Project ID: ' . $data['merchant']['project'] . PHP_EOL;
+        $message = "Lieber Shopinhaber,".PHP_EOL."Bei folgender erfolgreicher Zahlung via Novalnet hat keine Rückleitung zum Shop stattgefunden und daher wurde keine Bestellung angelegt. Bitte prüfen Sie die TID im Novalnet Portal und wenn die Transaktion wirklich erfolgreich war, dann legen Sie die Bestellung für den Kunden an. Loggen Sie als dieser Kunde ein. Falls die Artikel noch im Warenkorb liegen, schließen Sie die Bestellung für den Kunden z.B. mit Zahlungsart Vorkasse per Banküberweisung ab und informieren den Kunden entsprechend. Sollten die Artikel nicht mehr im Warenkorb sein, nehmen Sie mit dem Kunden Kontakt auf." .PHP_EOL;
+        $message .= 'MID: ' . $data['merchant']['vendor'] . PHP_EOL;
+        $message .= 'Projekt ID: ' . $data['merchant']['project'] . PHP_EOL;
         $message .= 'TID: ' . $data['event']['tid'] . PHP_EOL;
-        $message .= 'TID status: ' . $data['transaction']['status'] . PHP_EOL;
-        $message .= 'Payment type: ' . $data['transaction']['payment_type'] . PHP_EOL;
+        $message .= 'TID Status: ' . $data['transaction']['status'] . PHP_EOL;
+        $message .= 'Zahlungsart: ' . $data['transaction']['payment_type'] . PHP_EOL;
         $message .= 'E-mail: ' . $data['customer']['email'] . PHP_EOL;
 
-        $message .=PHP_EOL. 'Regards,'.PHP_EOL.'Novalnet Team';
+        $message .=PHP_EOL. 'Freundliche Grüße,'.PHP_EOL.'Novalnet Team';
 		zen_mail($customer_name, STORE_OWNER_EMAIL_ADDRESS, $subject, str_replace('</br>', PHP_EOL, $message), '', '', array(), '', '', STORE_NAME, $data['customer']['email']);
     }
 }
