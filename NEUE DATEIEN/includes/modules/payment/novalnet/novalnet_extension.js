@@ -1,6 +1,6 @@
 /**
  * Novalnet payment module
- * This script is used for handling post process of
+ * This script is used for handling validation of post process of
  * Novalnet payment orders
  *
  * @author     Novalnet AG
@@ -28,7 +28,6 @@ jQuery(document).ready(function () {
     for (let i = 0; i < elements.length; i++) {
         elements[i].addEventListener('click', nn_instalment_refund_function, false);
     }
-
     $(document).on('click', '#nn_instacancel_allcycles, #nn_instacancel_remaincycles, #nn_instalment_cancel', function (event) {
         if ($("#novalnet_instalment_cancel").css({"display": "none"})) {
             $("#novalnet_instalment_cancel").css({"display": "inline-flex"});
@@ -57,13 +56,11 @@ function void_capture_status()
     }
 
     let display_status = jQuery("#trans_status").val() == 'CONFIRM' ? jQuery("[name=nn_capture_update]").val() : jQuery("[name=nn_void_update]").val();
-
     if (!confirm(display_status)) {
         return false;
     }
 
     let url = jQuery('#novalnet_status_change').attr('action');
-
     if (jQuery("#trans_status").val() == 'CONFIRM') {
         jQuery('#novalnet_status_change').attr('action', url + '&action=doCapture');
     } else {

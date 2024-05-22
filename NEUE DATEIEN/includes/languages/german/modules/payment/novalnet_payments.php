@@ -23,6 +23,7 @@ define('MODULE_PAYMENT_NOVALNET_AMOUNT_TRANSFER_NOTE', 'Bitte überweisen Sie de
 define('MODULE_PAYMENT_NOVALNET_INSTALMENT_AMOUNT_TRANSFER_NOTE_DUE_DATE', 'Bitte überweisen Sie die Anzahl der Raten von %1$s spätestens bis zum %2$s auf das folgende Konto');
 define('MODULE_PAYMENT_NOVALNET_INSTALMENT_AMOUNT_TRANSFER_NOTE', 'Bitte überweisen Sie die Anzahl der Raten %1$s auf das folgende Konto.');
 define('MODULE_PAYMENT_NOVALNET_MULTIBANCO_NOTE', 'Bitte verwenden Sie die folgende Zahlungsreferenz, um den Betrag von %s an einem Multibanco-Geldautomaten oder über Ihr Onlinebanking zu bezahlen.');
+define('MODULE_PAYMENT_NOVALNET_MULTIBANCO_SUPPLIER_NOTE', 'Entität: %s');
 define('MODULE_PAYMENT_NOVALNET_AMOUNT_TRANSFER_NOTE_DUE_DATE', 'Bitte überweisen Sie den Betrag von %1$s spätestens bis zum %2$s auf das folgende Konto');
 define('MODULE_PAYMENT_NOVALNET_BANK_NAME', 'Bank: ');
 define('MODULE_PAYMENT_NOVALNET_IBAN', 'IBAN: ');
@@ -138,3 +139,18 @@ define('MODULE_PAYMENT_NOVALNET_DUEDATE_UPDATE_NOTE', ' Fälligkeitsdatum der Tr
 define('MODULE_PAYMENT_NOVALNET_AMOUNT_DUEDATE_UPDATE_NOTE', 'Der Transaktion Betrag %1$s und das Fälligkeitsdatum %2$s wurden erfolgreich aktualisiert auf %3$s');
 define('MODULE_PAYMENT_NOVALNET_BARZAHLEN_SUCCESS_BUTTON', 'Bezahlen mit Barzahlen');
 define('MODULE_PAYMENT_NOVALNET_WALLET_TOTAL_LABEL', 'Geschätzter Gesamtbetrag (Keine Angebote angewendet)');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_ACTION_REQUIRED', 'Aktion erforderlich - Bestellung nicht gefunden für die Transaktions-ID: ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_IN', ' im ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_SALUTATION', 'Sehr geehrter ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_ATTENTION', 'Wir möchten Sie auf die folgenden Transaktionsdetails aufmerksam machen:');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_COMMUNICATION_PROBLEM', 'Die Zahlung für die oben genannten Transaktionsdetails wurde in Novalnet erfolgreich verarbeitet. Es scheint jedoch, dass unser System Schwierigkeiten bei der Kommunikation mit Ihrem Shopsystem hatte.');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_DISCREPANCIES', 'Wir bitten Sie, eine der folgenden Maßnahmen zu ergreifen, um Unstimmigkeiten bei der Transaktion zu vermeiden:');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MANUAL_ORDER_CREATION', 'Manuelle Auftragserstellung: Bitte legen Sie eine Bestellung manuell im Back-Office Ihres Shops an und erstellen Sie eine Rechnung entsprechend den angegebenen Transaktionsdetails.');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_REFUND_INITIATION', 'Einleitung der Rückerstattung: Alternativ können Sie über das Novalnet Admin Portal(https://admin.novalnet.de/) eine Rückerstattung der Transaktion beantragen.');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_PROMPT_REVIEW', 'Wir würden es sehr begrüßen, wenn Sie diese Vorgänge umgehend überprüfen und entsprechende Maßnahmen ergreifen würden.');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_EMAIL', 'Kunden-E-Mail: ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_PAYMENT_TYPE', 'Zahlungsart: ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_TID_STATUS', 'Transaktions-ID Status: ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_TID', 'Transaktions-ID: ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_PROJECT_ID', 'Projekt-ID: ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_REGARDS', 'Herzliche Grüße,');

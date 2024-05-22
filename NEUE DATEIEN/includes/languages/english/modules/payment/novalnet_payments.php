@@ -25,6 +25,7 @@ define('MODULE_PAYMENT_NOVALNET_AMOUNT_TRANSFER_NOTE', 'Please transfer the amou
 define('MODULE_PAYMENT_NOVALNET_INSTALMENT_AMOUNT_TRANSFER_NOTE_DUE_DATE', 'Please transfer the instalment cycle amount of %1$s to the following account on or before %2$s');
 define('MODULE_PAYMENT_NOVALNET_INSTALMENT_AMOUNT_TRANSFER_NOTE', 'Please transfer the instalment cycle amount of %1$s to the following account.');
 define('MODULE_PAYMENT_NOVALNET_MULTIBANCO_NOTE', 'Please use the following payment reference details to pay the amount of %s at a Multibanco ATM or through your internet banking.');
+define('MODULE_PAYMENT_NOVALNET_MULTIBANCO_SUPPLIER_NOTE', 'Entity: %s');
 define('MODULE_PAYMENT_NOVALNET_BANK_NAME', ' Bank: ');
 define('MODULE_PAYMENT_NOVALNET_IBAN', 'IBAN: ');
 define('MODULE_PAYMENT_NOVALNET_BIC', ' BIC: ');
@@ -135,3 +136,18 @@ define('MODULE_PAYMENT_NOVALNET_DUEDATE_UPDATE_NOTE', 'Transaction due date %1$s
 define('MODULE_PAYMENT_NOVALNET_AMOUNT_DUEDATE_UPDATE_NOTE', 'Transaction amount %1$s and due date %2$s has been updated successfully on %3$s');
 define('MODULE_PAYMENT_NOVALNET_BARZAHLEN_SUCCESS_BUTTON', 'Pay now with Barzahlen');
 define('MODULE_PAYMENT_NOVALNET_WALLET_TOTAL_LABEL', 'Estimated total (No offers applied)');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_ACTION_REQUIRED', 'Action Required - Order Not found for the Transaction ID: ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_IN', ' in ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_SALUTATION', 'Dear ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_ATTENTION', 'We would like to bring to your attention the following transaction details:');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_COMMUNICATION_PROBLEM', 'The payment for the above transaction details was successfully processed in Novalnet. However, it appears that our system encountered difficulties in communicating with your shop system.');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_DISCREPANCIES', 'We kindly request one of the following actions to prevent any discrepancies for the transaction:');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MANUAL_ORDER_CREATION', 'Manual Order Creation: Please create an order manually in your shop back-office and generate an invoice corresponding to the provided transaction details.');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_REFUND_INITIATION', 'Refund Initiation: Alternatively, you may initiate a refund for the transaction through the Novalnet Admin Portal(https://admin.novalnet.de/)');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_PROMPT_REVIEW', 'Your prompt review and action on these transaction details would be greatly appreciated.');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_EMAIL', 'Customer E-mail: ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_PAYMENT_TYPE', 'Payment Type: ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_TID_STATUS', 'Transaction ID Status: ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_TID', 'Transaction ID: ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_PROJECT_ID', 'Project ID: ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_REGARDS', 'Regards,');

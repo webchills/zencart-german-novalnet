@@ -459,7 +459,9 @@ class NovalnetHelper
         if (!empty($response['transaction']['partner_payment_reference'])) {
             $amount = $currencies->format($response['transaction']['amount'] / 100, true, $response['transaction']['currency']);
             $txn_details .= PHP_EOL . sprintf(MODULE_PAYMENT_NOVALNET_MULTIBANCO_NOTE, $amount);
-            $txn_details .= PHP_EOL . sprintf(MODULE_PAYMENT_NOVALNET_PARTNER_PAYMENT_REFERENCE, $response['transaction']['partner_payment_reference']) . PHP_EOL;
+            $txn_details .= PHP_EOL . sprintf(MODULE_PAYMENT_NOVALNET_PARTNER_PAYMENT_REFERENCE, $response['transaction']['partner_payment_reference']);
+            $txn_details .= PHP_EOL . sprintf(MODULE_PAYMENT_NOVALNET_MULTIBANCO_SUPPLIER_NOTE, $response['transaction']['service_supplier_id']) . PHP_EOL;
+
         }
 
         return $txn_details;

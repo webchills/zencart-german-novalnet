@@ -143,10 +143,10 @@ class NovalnetWebhooks
     private function authenticateEventData()
     {
 		$novalnet_host_name   = 'pay-nn.de';
-        $request_received_ip  = zen_get_ip_address();
         $novalnet_host_ip     = gethostbyname($novalnet_host_name);
+        $request_received_ip  = $this->getRemoteAddress($novalnet_host_ip);
         if (!empty($novalnet_host_ip) && !empty($request_received_ip)) {
-            if (MODULE_PAYMENT_NOVALNET_CALLBACK_TEST_MODE == 'False' && $novalnet_host_ip !== $request_received_ip) {
+            if (MODULE_PAYMENT_NOVALNET_CALLBACK_TEST_MODE == 'False' && $novalnet_host_ip != $request_received_ip) {
                 $this->displayMessage(['message' => 'Unauthorised access from the IP ' . $request_received_ip]);
             }
         } else {
@@ -155,6 +155,26 @@ class NovalnetWebhooks
         $this->validateEventData();
         $this->validateCheckSum();
     }
+
+    /**
+     * Get remote address
+     *
+     * @param $novalnet_host_ip
+     *
+     */
+    public function getRemoteAddress($novalnet_host_ip)
+	{
+		$ip_keys = array('HTTP_X_FORWARDED_HOST', 'HTTP_X_REAL_IP', 'HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR');
+		foreach ($ip_keys as $key)  {
+			if (array_key_exists($key, $_SERVER) === true)  {
+				if(in_array($key, ['HTTP_X_FORWARDED_HOST', 'HTTP_X_FORWARDED_FOR']))  {
+					$forwarded_ip = !empty($_SERVER[$key]) ? explode(',', $_SERVER[$key]) : [];
+					return in_array($novalnet_host_ip, $forwarded_ip) ? $novalnet_host_ip : $_SERVER[$key];
+				}
+				return $_SERVER[$key];
+			}
+		}
+	}
 
     /**
      * Validate event data mandatory parameters
@@ -214,7 +234,13 @@ class NovalnetWebhooks
         global $db;
         $order_details = [];
         $novalnet_order_details = $db->Execute("SELECT * FROM ".TABLE_NOVALNET_TRANSACTION_DETAIL." WHERE tid = '".$this->parent_tid."'");
-        $order_number = !empty($novalnet_order_details->fields['order_no']) ? $novalnet_order_details->fields['order_no'] : (!empty($this->event_data['transaction']['order_no']) ? $this->event_data['transaction']['order_no'] : '');
+         if(isset($novalnet_order_details->fields['order_no'])){
+			    $order_number = $novalnet_order_details->fields['order_no'];
+		 }
+        if  (empty($order_number) && !empty($this->event_data['transaction']['order_no'])) {
+			$novalnet_order_details = $db->Execute("SELECT * FROM ".TABLE_NOVALNET_TRANSACTION_DETAIL." WHERE order_no = '".$this->event_data['transaction']['order_no']."'");
+			$order_number = $novalnet_order_details->fields['order_no'];
+		}
         // If order number not found in shop but Novalnet transcation was successful
         if (empty($order_number) && $this->event_data['result']['status'] == 'SUCCESS') {
 			  $this->sentCriticalMail($this->event_data);
@@ -225,7 +251,7 @@ class NovalnetWebhooks
         && (($this->event_data['transaction']['order_no']) != $novalnet_order_details->fields['order_no'])) {
             $this->displayMessage(['message' => 'Die Novalnet Bestellreferenznummer entspricht nicht der Shop Bestellnummer '. $order_number]);
         }
-        $shop_order_details = $db->Execute("SELECT order_total, orders_id, orders_status, language_code FROM ".TABLE_ORDERS." WHERE orders_id = '".$novalnet_order_details->fields['order_no']."'");
+        $shop_order_details = $db->Execute("SELECT order_total, orders_id, orders_status, language_code FROM ".TABLE_ORDERS." WHERE orders_id = '".$order_number."'");
         $order_lang = $db->Execute("SELECT directory FROM " . TABLE_LANGUAGES . " WHERE code = '" . $shop_order_details->fields['language_code'] ."'");
         $this->includeRequiredFiles($order_lang->fields['directory']);
         $order_details['nn_trans_details'] =  $novalnet_order_details->fields;
@@ -645,20 +671,25 @@ class NovalnetWebhooks
      *
      * @return none
      */
-    private function sentCriticalMail($data)
+private function sentCriticalMail($data)
     {
-		$subject = 'WICHTIG: Problem mit Novalnet Bestellung bei '.STORE_NAME.': Bestellung trotz erfolgreicher Zahlung nicht angelegt. TID: ' . $data['event']['tid'];
-		$customer_name = $data['customer']['first_name'] . $data['customer']['last_name'];
-        $message = "Lieber Shopinhaber,".PHP_EOL."Bei folgender erfolgreicher Zahlung via Novalnet hat keine Rückleitung zum Shop stattgefunden und daher wurde keine Bestellung angelegt. Bitte prüfen Sie die TID im Novalnet Portal und wenn die Transaktion wirklich erfolgreich war, dann legen Sie die Bestellung für den Kunden an. Loggen Sie als dieser Kunde ein. Falls die Artikel noch im Warenkorb liegen, schließen Sie die Bestellung für den Kunden z.B. mit Zahlungsart Vorkasse per Banküberweisung ab und informieren den Kunden entsprechend. Sollten die Artikel nicht mehr im Warenkorb sein, nehmen Sie mit dem Kunden Kontakt auf." .PHP_EOL;
-        $message .= 'MID: ' . $data['merchant']['vendor'] . PHP_EOL;
-        $message .= 'Projekt ID: ' . $data['merchant']['project'] . PHP_EOL;
-        $message .= 'TID: ' . $data['event']['tid'] . PHP_EOL;
-        $message .= 'TID Status: ' . $data['transaction']['status'] . PHP_EOL;
-        $message .= 'Zahlungsart: ' . $data['transaction']['payment_type'] . PHP_EOL;
-        $message .= 'E-mail: ' . $data['customer']['email'] . PHP_EOL;
-
-        $message .=PHP_EOL. 'Freundliche Grüße,'.PHP_EOL.'Novalnet Team';
-		zen_mail($customer_name, STORE_OWNER_EMAIL_ADDRESS, $subject, str_replace('</br>', PHP_EOL, $message), '', '', array(), '', '', STORE_NAME, $data['customer']['email']);
+		global $currencies;
+		$this->includeRequiredFiles('german');
+        $subject = MODULE_PAYMENT_NOVALNET_WEBHOOK_ACTION_REQUIRED . $data['event']['tid'] .MODULE_PAYMENT_NOVALNET_WEBHOOK_IN . STORE_NAME;
+        $message = MODULE_PAYMENT_NOVALNET_WEBHOOK_SALUTATION . STORE_OWNER . ',' . PHP_EOL . PHP_EOL. MODULE_PAYMENT_NOVALNET_WEBHOOK_ATTENTION . PHP_EOL;
+        $message .= MODULE_PAYMENT_NOVALNET_WEBHOOK_PROJECT_ID . $data['merchant']['project'] . PHP_EOL;
+        $message .= MODULE_PAYMENT_NOVALNET_WEBHOOK_TID . $data['event']['tid'] . PHP_EOL;
+        $message .= MODULE_PAYMENT_NOVALNET_WEBHOOK_TID_STATUS . $data['transaction']['status'] . PHP_EOL;
+        $message .= MODULE_PAYMENT_NOVALNET_WEBHOOK_PAYMENT_TYPE . $data['transaction']['payment_type'] . PHP_EOL;
+        $message .= MODULE_PAYMENT_NOVALNET_AMOUNT . $currencies->format(($data['transaction']['amount'] /100), 1, $data['transaction']['currency']). PHP_EOL;
+        $message .= MODULE_PAYMENT_NOVALNET_WEBHOOK_EMAIL . $data['customer']['email'] . PHP_EOL;
+        $message .= PHP_EOL . MODULE_PAYMENT_NOVALNET_WEBHOOK_COMMUNICATION_PROBLEM . PHP_EOL;
+        $message .= PHP_EOL . MODULE_PAYMENT_NOVALNET_WEBHOOK_DISCREPANCIES . PHP_EOL;
+        $message .= PHP_EOL . MODULE_PAYMENT_NOVALNET_WEBHOOK_MANUAL_ORDER_CREATION . PHP_EOL;
+        $message .= MODULE_PAYMENT_NOVALNET_WEBHOOK_REFUND_INITIATION . PHP_EOL;
+        $message .= PHP_EOL . MODULE_PAYMENT_NOVALNET_WEBHOOK_PROMPT_REVIEW . PHP_EOL;
+        $message .= PHP_EOL . MODULE_PAYMENT_NOVALNET_WEBHOOK_REGARDS . PHP_EOL . 'Novalnet Team';
+		zen_mail(STORE_NAME, STORE_OWNER_EMAIL_ADDRESS, $subject, str_replace('</br>', PHP_EOL, $message), STORE_NAME, EMAIL_FROM, array(), '', '', STORE_NAME, EMAIL_FROM);
     }
 }
 new NovalnetWebhooks();
