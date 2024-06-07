@@ -10,7 +10,7 @@
  * @link       https://www.novalnet.de
  *
  * Script : novalnet_payments.php
- * modified for Zen Cart German 1.5.7h - 2024-03-26 webchills
+ * modified for Zen Cart German 1.5.7h - 2024-06-07 webchills
  */
 
 require_once(DIR_FS_CATALOG . DIR_WS_MODULES.'payment/novalnet/NovalnetHelper.php');

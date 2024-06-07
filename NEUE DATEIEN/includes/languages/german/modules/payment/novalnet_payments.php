@@ -43,7 +43,7 @@ define('MODULE_PAYMENT_NOVALNET_TRANSACTION_ERROR', 'Die Zahlung war nicht erfol
 define('MODULE_PAYMENT_NOVALNET_SELECT_STATUS_OPTION', '--Auswählen--');
 define('MODULE_PAYMENT_NOVALNET_TRANS_CONFIRM_SUCCESSFUL_MESSAGE', 'Die Buchung für die TID %1$s wurde am %2$s bestätigt');
 define('MODULE_PAYMENT_NOVALNET_TRANS_CONFIRM_SUCCESSFUL_MESSAGE_TEXT', 'Die Buchung für die TID %1$s wurde am %2$s bestätigt');
-define('MODULE_PAYMENT_NOVALNET_TRANS_DEACTIVATED_MESSAGE', 'Die Transaktion wurde um %1$s Uhr storniert');
+define('MODULE_PAYMENT_NOVALNET_TRANS_DEACTIVATED_MESSAGE', 'Die Transaktion wurde am %1$s storniert');
 define('MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCELED_MESSAGE', 'Die Transaktion wurde storniert für die %1$s auf %2$s %3$s');
 define('MODULE_PAYMENT_NOVALNET_AMOUNT_EX', '     (in der kleinsten Währungseinheit, z.B. 100 Cent = entsprechen 1.00 EUR)');
 define('MODULE_PAYMENT_NOVALNET_REFUND_PARENT_TID_MSG', 'Die Rückerstattung für die TID: %1$s mit dem Betrag %2$s wurde veranlasst.');

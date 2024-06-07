@@ -12,4 +12,4 @@
  * Script : novalnet.php
  */
 define('TABLE_NOVALNET_TRANSACTION_DETAIL', DB_PREFIX . 'novalnet_transaction_detail');
-define('NOVALNET_MODULE_VERSION', '13.3.1');
+define('NOVALNET_MODULE_VERSION', '13.3.2');

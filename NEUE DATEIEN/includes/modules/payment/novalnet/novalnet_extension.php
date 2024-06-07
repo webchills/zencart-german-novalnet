@@ -94,6 +94,7 @@ if (defined('MODULE_PAYMENT_NOVALNET_STATUS') && MODULE_PAYMENT_NOVALNET_STATUS 
                 $output .= '<button id="nn_instalment_cancel" class="btn btn-primary" style="display: block;">' . MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_ADMIN_TEXT . '</button>';
             }
 
+           $foundConfirm  = true;
             if (in_array('Refunded', $instalment_status)) {
                 foreach ($instalment_status as $status) {
                 if ($status === 'Paid') {

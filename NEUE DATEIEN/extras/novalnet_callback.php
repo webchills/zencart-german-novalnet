@@ -239,17 +239,26 @@ class NovalnetWebhooks
 		 }
         if  (empty($order_number) && !empty($this->event_data['transaction']['order_no'])) {
 			$novalnet_order_details = $db->Execute("SELECT * FROM ".TABLE_NOVALNET_TRANSACTION_DETAIL." WHERE order_no = '".$this->event_data['transaction']['order_no']."'");
+			if( !isset($novalnet_order_details->fields['order_no']) ){
+				  $this->displayMessage(['message' => 'Bestellung im Shop nicht gefunden']);
+			}
 			$order_number = $novalnet_order_details->fields['order_no'];
 		}
-        // If order number not found in shop but Novalnet transcation was successful
-        if (empty($order_number) && $this->event_data['result']['status'] == 'SUCCESS') {
-			  $this->sentCriticalMail($this->event_data);
+        // If order number not found in shop and Novalnet
+        if (empty($order_number) )
+        {
+			if( $this->event_data['result']['status'] == 'SUCCESS') {
+			$this->sentCriticalMail($this->event_data);
             $this->displayMessage(['message' => 'Bestellung nicht gefunden für TID '. $this->parent_tid]);
         }
+        else{
+			$this->displayMessage(['message' => $this->event_data['result']['status_text'] ]);
+		}
+	}
         // If the order number at Novalnet and the shop doesn't match
         if (!empty($this->event_data['transaction']['order_no']) && !empty($novalnet_order_details->fields['order_no'])
         && (($this->event_data['transaction']['order_no']) != $novalnet_order_details->fields['order_no'])) {
-            $this->displayMessage(['message' => 'Die Novalnet Bestellreferenznummer entspricht nicht der Shop Bestellnummer '. $order_number]);
+            $this->displayMessage(['message' => 'Shop Bestellnummer entspricht nicht der Novalnet Bestellnummer '. $this->event_data['transaction']['order_no']]);
         }
         $shop_order_details = $db->Execute("SELECT order_total, orders_id, orders_status, language_code FROM ".TABLE_ORDERS." WHERE orders_id = '".$order_number."'");
         $order_lang = $db->Execute("SELECT directory FROM " . TABLE_LANGUAGES . " WHERE code = '" . $shop_order_details->fields['language_code'] ."'");
@@ -352,7 +361,7 @@ class NovalnetWebhooks
         if (isset($this->order_details['nn_trans_details']['amount']) && $refunded_amount >= $this->order_details['nn_trans_details']['amount']) {
             $order_status_id = NovalnetHelper::getOrderStatusId();
         }
-        $this->updateNovalnetTransaction($novalnet_update_data, "tid='{$this->parent_tid}'");
+        $this->updateNovalnetTransaction($novalnet_update_data, "tid='{$this->order_details['nn_trans_details']['tid']}'");
         $this->updateOrderStatusHistory($this->order_details['shop_order_no'], $order_status_id, $comments);
         $this->sendWebhookMail($comments);
         $this->displayMessage(['message' => zen_db_prepare_input($comments . PHP_EOL)]);
