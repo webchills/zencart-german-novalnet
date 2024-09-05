@@ -3,7 +3,7 @@ Novalnet Zahlungsmodul für Zen Cart 1.5.7 deutsch
 Installation:
 Den Ordner DEINADMIN im Ordner NEUE DATEIEN auf den Namen Ihres Adminverzeichnisses umbenennen.
 Dann den Inhalt des Ordners NEUE DATEIEN in der vorgegebenen Struktur ins Shopverzeichnis hochladen.
-Dabei werden keine bestehenden Dateien überschrieben
+Dabei werden keine bestehenden Dateien überschrieben.
 
 Unter Module > Zahlungsarten das Modul novalnet_payments installieren.
 
@@ -16,3 +16,20 @@ Wenn Sie das Novalnet Modul aktivieren werden im Bestellablauf genau die Zahlung
 Unter Kunden > Novalnet Transaktionen finden Sie später im Shop eine Übersicht der per Novalnet bezahlten Bestellungen.
 
 Rückerstattungen sind via Shopadministration möglich.
+
+Um das Laden der Novalnet Zahlungsarten auf der checkout_payment Seite zu beschleunigen, können die Novalnet Scripts vorgeladen werden.
+Um das zu nutzen, ändern Sie die includes/templates/DEINTEMPLATE/common/html_header.php in Ihrem Shop ab und fügen ein:
+
+<?php if (defined('MODULE_PAYMENT_NOVALNET_STATUS') && MODULE_PAYMENT_NOVALNET_STATUS == 'True') {?>
+<link rel="dns-prefetch" href="https://seamless.novalnet.de">
+<link rel="dns-prefetch" href="https://cdn.novalnet.de">
+<?php if  ($current_page_base == "checkout_payment") {?>
+<link rel="preconnect" href="https://seamless.novalnet.de/" crossorigin />
+<link rel="preconnect" href="https://cdn.novalnet.de/" crossorigin />
+<?php } ?> 
+<?php } ?>
+
+Eine Vorlage dazu für das responsive_classic Template finden Sie im Ordner:
+GEAENDERTE DATEIEN/includes/templates/DEINTEMPLATE_RESPONSIVE/common
+Für andere Templates verwenden Sie als Vorlage:
+GEAENDERTE DATEIEN/includes/templates/DEINTEMPLATE/common
