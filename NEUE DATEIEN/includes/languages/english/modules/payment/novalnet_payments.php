@@ -82,7 +82,7 @@ define('MODULE_PAYMENT_NOVALNET_REFUND_TITLE', 'Refund process');
 define('MODULE_PAYMENT_NOVALNET_PAYMENT_REFUND_CONFIRM', 'Are you sure you want to refund the amount');
 define('MODULE_PAYMENT_NOVALNET_REFUND_REFERENCE_TEXT', 'Refund reference');
 define('MODULE_PAYMENT_NOVALNET_REFUND_AMT_TITLE', 'Please enter the refund amound');
-define('MODULE_PAYMENT_NOVALNET_REFUND_REASON_TITLE', 'Reason for refund (optional)');
+define('MODULE_PAYMENT_NOVALNET_REFUND_REASON_TITLE', 'Refund / Cancellation Reason');
 
 define('MODULE_PAYMENT_NOVALNET_INSTALMENT_INSTALMENTS_INFO', 'Instalment information');
 define('MODULE_PAYMENT_NOVALNET_INSTALMENT_PROCESSED_INSTALMENTS', 'Processed instalments:  ');

@@ -43,7 +43,7 @@ define('MODULE_PAYMENT_NOVALNET_TRANSACTION_ERROR', 'Die Zahlung war nicht erfol
 define('MODULE_PAYMENT_NOVALNET_SELECT_STATUS_OPTION', '--Auswählen--');
 define('MODULE_PAYMENT_NOVALNET_TRANS_CONFIRM_SUCCESSFUL_MESSAGE', 'Die Buchung für die TID %1$s wurde am %2$s bestätigt');
 define('MODULE_PAYMENT_NOVALNET_TRANS_CONFIRM_SUCCESSFUL_MESSAGE_TEXT', 'Die Buchung für die TID %1$s wurde am %2$s bestätigt');
-define('MODULE_PAYMENT_NOVALNET_TRANS_DEACTIVATED_MESSAGE', 'Die Transaktion wurde am %1$s storniert');
+define('MODULE_PAYMENT_NOVALNET_TRANS_DEACTIVATED_MESSAGE', 'Die Transaktion wurde um %1$s Uhr storniert');
 define('MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCELED_MESSAGE', 'Die Transaktion wurde storniert für die %1$s auf %2$s %3$s');
 define('MODULE_PAYMENT_NOVALNET_AMOUNT_EX', '     (in der kleinsten Währungseinheit, z.B. 100 Cent = entsprechen 1.00 EUR)');
 define('MODULE_PAYMENT_NOVALNET_REFUND_PARENT_TID_MSG', 'Die Rückerstattung für die TID: %1$s mit dem Betrag %2$s wurde veranlasst.');
@@ -64,10 +64,10 @@ define('NOVALNET_WEBHOOK_CHARGEBACK_NOTE', 'Chargeback erfolgreich importiert f�
 define('NOVALNET_WEBHOOK_NEW_INSTALMENT_NOTE', 'Für die Transaktions-ID ist eine neue Rate eingegangen: %1$s mit Betrag %2$s am %3$s. Die Transaktions-ID der neuen Rate lautet: %4$s');
 define('NOVALNET_WEBHOOK_INSTALMENT_CANCEL_NOTE', 'Die Ratenzahlung für die TID wurde gekündigt: %1$s am %2$s');
 
-define('NOVALNET_PAYMENT_STATUS_PENDING_TO_ONHOLD_TEXT', 'Der Status der Transaktion mit der TID: %1$s wurde am %2$s um von ausstehend auf ausgesetzt geändert ');
+define('NOVALNET_PAYMENT_STATUS_PENDING_TO_ONHOLD_TEXT', 'Der Status der Transaktion mit der TID: %1$s wurde am %2$s von ausstehend auf ausgesetzt geändert.');
 
-define('NOVALNET_WEBHOOK_TRANSACTION_UPDATE_NOTE_DUE_DATE', 'Transaktion mit TID %1$s und Betrag %2$s wurde am %3$s um erfolgreich aktualisiert ');
-define('NOVALNET_WEBHOOK_TRANSACTION_UPDATE_NOTE', 'Transaktion mit TID %1$s und Betrag %2$s wurde am um erfolgreich.');
+define('NOVALNET_WEBHOOK_TRANSACTION_UPDATE_NOTE_DUE_DATE', 'Transaktion mit TID %1$s und Betrag %2$s wurde am %3$s erfolgreich aktualisiert.');
+define('NOVALNET_WEBHOOK_TRANSACTION_UPDATE_NOTE', 'Transaktion mit TID %1$s und Betrag %2$s wurde am %3$s erfolgreich aktualisiert.');
 define('NOVALNET_PAYMENT_REMINDER_NOTE', 'Zahlungserinnerung %1$s wurde an den Kunden gesendet.');
 define('NOVALNET_COLLECTION_SUBMISSION_NOTE', 'Die Transaktion wurde an das Inkassobüro übergeben. Inkasso-Referenz: %1$s');
 
@@ -82,7 +82,7 @@ define('MODULE_PAYMENT_NOVALNET_REFUND_TITLE', 'Erstattungsverfahren');
 define('MODULE_PAYMENT_NOVALNET_PAYMENT_REFUND_CONFIRM', 'Sind Sie sicher, dass Sie den Betrag erstatten wollen?');
 define('MODULE_PAYMENT_NOVALNET_REFUND_REFERENCE_TEXT', 'Referenz für die Erstattung');
 define('MODULE_PAYMENT_NOVALNET_REFUND_AMT_TITLE', 'Bitte geben Sie den Erstattungsbetrag ein');
-define('MODULE_PAYMENT_NOVALNET_REFUND_REASON_TITLE', 'Grund für die Rückerstattung (optional)');
+define('MODULE_PAYMENT_NOVALNET_REFUND_REASON_TITLE', 'Grund der Rückerstattung/Stornierung');
 define('MODULE_PAYMENT_NOVALNET_INSTALLMENT_TEXT', 'Wählen Sie Ihren Ratenzahlungsplan <b>(Netto-Kreditbetrag: %s )</b>');
 
 define('MODULE_PAYMENT_NOVALNET_INSTALMENT_INSTALMENTS_INFO', 'Informationen zur Ratenzahlung');
