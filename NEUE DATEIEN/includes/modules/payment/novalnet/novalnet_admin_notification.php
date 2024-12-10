@@ -38,7 +38,7 @@ if (method_exists($this, '_doRefund')) {
         $outputRefund .=  zen_draw_hidden_field('nn_amount_error', MODULE_PAYMENT_NOVALNET_AMOUNT_ERROR_MESSAGE);
         $outputRefund .=  zen_draw_hidden_field('nn_refund_amount_confirm', MODULE_PAYMENT_NOVALNET_PAYMENT_REFUND_CONFIRM);
         $outputRefund .= '<td class="dataTableContent">';
-        $outputRefund .= zen_draw_input_field('refund_trans_amount', $refund_value, 'id="refund_trans_amount"  style="width:100px;margin:0 0 0 2%" autocomplete="off"') . MODULE_PAYMENT_NOVALNET_AMOUNT_EX . '</td></tr>';
+        $outputRefund .= zen_draw_input_field('refund_trans_amount', $refund_value, 'id="refund_trans_amount" onkeypress="isNumber(event)"  style="width:100px;margin:0 0 0 2%" autocomplete="off"') . MODULE_PAYMENT_NOVALNET_AMOUNT_EX . '</td></tr>';
         $outputRefund .= '<td class="dataTableContent">'.MODULE_PAYMENT_NOVALNET_REFUND_REASON_TITLE . '</td>';
         $outputRefund .= '<td class="dataTableContent">' . zen_draw_input_field('refund_reason', '', 'id="refund_reason" style="margin:0 0 0 2%;" autocomplete="off"').'</td>';
         $outputRefund .= '<tr class="dataTableRow"><td class="dataTableContent">'.zen_draw_input_field('nn_refund_confirm', html_entity_decode(MODULE_PAYMENT_NOVALNET_CONFIRM_TEXT), 'class="btn btn-primary" onclick="return refund_amount_validation();" style="float:left"', false, 'submit').'</td><td></td></tr>';
@@ -98,7 +98,7 @@ $output .= '<!-- EOF: novalnet transaction processing tools -->';
 * Check whether refund block shown or not in admin panel
 *
 * @param array $txn_details
-* 
+*
 * @return boolean
 */
 function isRefund($txn_details) {

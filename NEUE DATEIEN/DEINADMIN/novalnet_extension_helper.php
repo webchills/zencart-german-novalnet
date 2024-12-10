@@ -118,12 +118,15 @@ if ($txn_details->RecordCount()) {
             $order_status_value = ($update_data['refund_amount'] >= $txn_details->fields['amount']) ? NovalnetHelper::getOrderStatusId() : $current_order_status->fields['orders_status'];
         }
     }
-    if ($response['result']['status'] == 'SUCCESS') {
+    if (isset($response['result']['status']) && $response['result']['status'] == 'SUCCESS') {
         zen_db_perform(TABLE_NOVALNET_TRANSACTION_DETAIL, $update_data, 'update', 'order_no='.$request['oID']);
 		$messageStack->add_session($response['result']['status_text'], 'success');
-	} else {
+	}elseif (isset($response['result']['status_text'])){
 		$messageStack->add_session($response['result']['status_text'], 'error');
 	}
+    else{
+        $messageStack->add_session('No valid amount given (FULL or digits only, in smallest amount of currency)', 'error');
+    }
 	NovalnetHelper::novalnetUpdateOrderStatus($request['oID'], $message, $order_status_value);
 	zen_redirect(zen_href_link(FILENAME_ORDERS, zen_get_all_get_params(['action']) . 'action=edit' . '&oID=' . (int)$request['oID']));
 }

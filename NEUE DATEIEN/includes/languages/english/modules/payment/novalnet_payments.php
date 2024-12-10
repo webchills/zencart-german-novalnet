@@ -123,6 +123,9 @@ define('MODULE_PAYMENT_NOVALNET_ORDER_MAIL_DATE', 'Date Ordered: %s');
 define('MODULE_PAYMENT_NOVALNET_ORDER_NUMBER', 'Order number: %s');
 define('MODULE_PAYMENT_NOVALNET_DELIVERY_ADDRESS', 'Delivery address');
 define('MODULE_PAYMENT_NOVALNET_BILLING_ADDRESS', 'Billing address');
+define('MODULE_PAYMENT_NOVALNET_MAIL_TEMPLATE_DEAR_TEXT', 'Dear Mr/Ms. %s,');
+define('MODULE_PAYMENT_NOVALNET_MAIL_TEMPLATE_BEST_REAGRDS', 'Best Regards,');
+define('MODULE_PAYMENT_NOVALNET_MAIL_TEMPLATE_NOVALNET', 'The Novalnet Team');
 define('MODULE_PAYMENT_NOVALNET_ORDER_CONFIRMATION', 'Payment confirmation:');
 define('MODULE_PAYMENT_NOVALNET_CUSTOMER_SALUTATION', 'Dear Mr/Ms  ');
 
@@ -146,8 +149,25 @@ define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MANUAL_ORDER_CREATION', 'Manual Order Cr
 define('MODULE_PAYMENT_NOVALNET_WEBHOOK_REFUND_INITIATION', 'Refund Initiation: Alternatively, you may initiate a refund for the transaction through the Novalnet Admin Portal(https://admin.novalnet.de/)');
 define('MODULE_PAYMENT_NOVALNET_WEBHOOK_PROMPT_REVIEW', 'Your prompt review and action on these transaction details would be greatly appreciated.');
 define('MODULE_PAYMENT_NOVALNET_WEBHOOK_EMAIL', 'Customer E-mail: ');
-define('MODULE_PAYMENT_NOVALNET_WEBHOOK_PAYMENT_TYPE', 'Payment Type: ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_PAYMENT_TYPE', 'Payment Method: ');
 define('MODULE_PAYMENT_NOVALNET_WEBHOOK_TID_STATUS', 'Transaction ID Status: ');
 define('MODULE_PAYMENT_NOVALNET_WEBHOOK_TID', 'Transaction ID: ');
 define('MODULE_PAYMENT_NOVALNET_WEBHOOK_PROJECT_ID', 'Project ID: ');
 define('MODULE_PAYMENT_NOVALNET_WEBHOOK_REGARDS', 'Regards,');
+
+
+
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_CAPTURE_SUBJECT', 'Transaction Confirmed via Novalnet');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_CANCEL_SUBJECT', 'Transaction Canceled via Novalnet');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_REFUND_SUBJECT', 'Transaction Refunded via Novalnet');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_CREDIT_SUBJECT', 'Credit Received via Novalnet');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_CHARGEBACK_SUBJECT', 'Chargeback Received via Novalnet');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_INSTALMENT_SUBJECT', 'New Instalment Received via Novalnet');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_INSTALMENT_CANCEL_SUBJECT', 'Instalment Canceled via Novalnet');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_TRANS_UPDATE_SUBJECT', 'Transaction Updated via Novalnet');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_REMINDER_SUBJECT', 'Payment Reminder via Novalnet');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_COLLECTION_SUBMISSION_SUBJECT', 'Collection Submission via Novalnet');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_SUPPORT_TEXT', 'For further assistance, please contact our support team at support@novalnet.de. Or visit your Novalnet admin portal for more details.
+');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_TRANS_DETAILS_TEXT', 'Transaction Details:');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_COLLECTION_STATUS', 'Collection Status: ');
