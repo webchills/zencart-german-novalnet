@@ -10,7 +10,7 @@
  * @link       https://www.novalnet.de
  *
  * Script : novalnet_payments.php
- * modified for Zen Cart German 1.5.7i - 2024-12-10 webchills
+ * modified for Zen Cart German 1.5.7i - 2024-12-19 webchills
  */
 
 require_once(DIR_FS_CATALOG . DIR_WS_MODULES.'payment/novalnet/NovalnetHelper.php');
@@ -385,7 +385,7 @@ class novalnet_payments extends base
         if ($table_exists->RecordCount() > 0) {
             $columns = $db->metaColumns('novalnet_transaction_detail');
             if (!isset($columns['NOVALNET_TXN_SECRET'])) {
-                $db->Execute("ALTER TABLE novalnet_transaction_detail ADD COLUMN novalnet_txn_secret VARCHAR(200) COMMENT 'Novalnet Redirect txn secret', ADD COLUMN novalnet_order_datas JSON COMMENT 'Shop order datas'");
+                $db->Execute("ALTER TABLE novalnet_transaction_detail ADD COLUMN novalnet_txn_secret VARCHAR(200) COMMENT 'Novalnet Redirect txn secret', ADD COLUMN novalnet_order_datas LONGTEXT COMMENT 'Shop order datas'");
             }
         } else {
             $sql_file = DIR_FS_CATALOG . DIR_WS_MODULES . 'payment/novalnet/sql/db_13_0_1.sql';

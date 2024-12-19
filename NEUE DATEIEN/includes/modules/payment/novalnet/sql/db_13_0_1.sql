@@ -8,6 +8,7 @@
  * @link       https://www.novalnet.de
  *
  * Script : db_13_0_1.sql
+ * modified for Zen Cart German 1.5.7i and MariaDB - 2024-12-19 webchills
  *
  */
 CREATE TABLE IF NOT EXISTS novalnet_transaction_detail (
@@ -22,7 +23,7 @@ CREATE TABLE IF NOT EXISTS novalnet_transaction_detail (
   refund_amount int(11) COMMENT 'Refund amount',
   callback_amount int(11) COMMENT 'Callback amount',
   novalnet_txn_secret VARCHAR(200) COMMENT 'Novalnet Redirect txn secret',
-  novalnet_order_datas JSON COMMENT 'Shop order datas',
+  novalnet_order_datas LONGTEXT COMMENT 'Shop order datas',
   PRIMARY KEY (id),
   KEY tid (tid),
   KEY payment_type (payment_type),
