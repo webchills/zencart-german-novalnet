@@ -1,5 +1,5 @@
 # zencart-german-novalnet
-Novalnet Zahlungsmodul für Zen Cart 1.5.7g/1.5.7h deutsch 
+Novalnet Zahlungsmodul für Zen Cart 1.5.7i deutsch 
 
 ## Sinn und Zweck:
 * Mit diesem Modul werden diverse Zahlungsarten via Novalnet in der deutschen Zen Cart Version integriert
@@ -19,6 +19,7 @@ Novalnet Zahlungsmodul für Zen Cart 1.5.7g/1.5.7h deutsch
 - Barzahlen/viacash
 - Przelewy24
 - eps
+- Novalnet Onlineüberweisung
 - Ratenzahlung per Rechnung
 - Ratenzahlung per SEPA Lastschrift
 - PayPal
@@ -35,9 +36,9 @@ Details zu den möglichen Zahlungsarten auf:
 
 ## Voraussetzungen:
 * Freigeschalteter Novalnet Merchant Account (Registrierung auf https://www.novalnet.de)
-* Zen Cart 1.5.7g deutsche Version oder 1.5.7h deutsche Version
+* Zen Cart 1.5.7i deutsche Version
 * Shop verwendet durchgehend https
-* PHP mindestens 8.0.x, empfohlen 8.1.x oder 8.2.x (mit 1.5.7h)
+* PHP mindestens 8.0.x, empfohlen 8.3.x (mit 1.5.7i)
  
 ## License  
 See Novalnet License Agreement at: https://www.novalnet.com/payment-plugins-free-license/
