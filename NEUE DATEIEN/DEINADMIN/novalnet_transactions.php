@@ -8,7 +8,7 @@
  * @link       https://www.novalnet.de
  *
  * Script : novalnet_transactions.php
- * modified for Zen Cart German 1.5.7h - 2024-03-07 webchills
+ * modified for Zen Cart German 1.5.7i - 2024-12-22 webchills
  */
 
   require('includes/application_top.php');
@@ -95,6 +95,7 @@
               <table class="table">
               <tr class="dataTableHeadingRow">
               	<td class="dataTableHeadingContent">ID</td>
+              	<td class="dataTableHeadingContent" text-center>STATUS</td>
               	<td class="dataTableHeadingContent"><?php echo TABLE_HEADING_ORDER_NUMBER; ?></td>    
               	<td class="dataTableHeadingContent"><?php echo TABLE_HEADING_CUSTOMERS; ?></td>
               	<td class="dataTableHeadingContent"><?php echo NOVALNET_PAYMENT_TYPE; ?></td>          	
@@ -137,6 +138,12 @@
 
 ?>
                 <td class="dataTableContent"> <?php echo $novalnet_tran['id']; ?> </td>
+                <?php if ($novalnet_tran['status'] =='') { ?>
+                	<td class="dataTableContent text-center"> <i class="fa-solid fa-ban" style="color: red;"></i></td>
+                	<?php } else { ?>
+                		
+                	<td class="dataTableContent text-center"> <i class="fa-solid fa-circle-check" style="color: green;"></i></td>
+                <?php } ?>
                 <td class="dataTableContent"> <?php echo $novalnet_tran['order_no']; ?> </td>
                 <td class="dataTableContent"> <?php echo '<a href="' . zen_href_link(FILENAME_CUSTOMERS, 'cID=' . $novalnet_tran['customers_id'], 'NONSSL') . '">' . zen_image(DIR_WS_ICONS . 'preview.gif', ICON_PREVIEW . ' ' . TABLE_HEADING_CUSTOMERS) . '</a>&nbsp;' . $novalnet_tran['customers_name'] . ($novalnet_tran['customers_company'] !== '' ? '<br>' . $novalnet_tran['customers_company'] : ''); ?> </td>
                 <td class="dataTableContent"> <?php echo $novalnet_tran['payment_method']; ?> </td>
