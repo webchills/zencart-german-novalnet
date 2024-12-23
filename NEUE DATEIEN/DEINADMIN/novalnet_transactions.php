@@ -8,7 +8,7 @@
  * @link       https://www.novalnet.de
  *
  * Script : novalnet_transactions.php
- * modified for Zen Cart German 1.5.7i - 2024-12-22 webchills
+ * modified for Zen Cart German 1.5.7i - 2024-12-23 webchills
  */
 
   require('includes/application_top.php');
@@ -98,14 +98,14 @@
               	<td class="dataTableHeadingContent" text-center>STATUS</td>
               	<td class="dataTableHeadingContent"><?php echo TABLE_HEADING_ORDER_NUMBER; ?></td>    
               	<td class="dataTableHeadingContent"><?php echo TABLE_HEADING_CUSTOMERS; ?></td>
-              	<td class="dataTableHeadingContent"><?php echo NOVALNET_PAYMENT_TYPE; ?></td>          	
+              	<td class="dataTableHeadingContent" width="160px"><?php echo NOVALNET_PAYMENT_TYPE; ?></td>          	
                 <td class="dataTableHeadingContent"><?php echo NOVALNET_REFERENCE_ID; ?></td>             
-                <td class="dataTableHeadingContent"><?php echo TABLE_HEADING_AMOUNT; ?></td>                                     
+                <td class="dataTableHeadingContent text-right"><?php echo TABLE_HEADING_AMOUNT; ?></td>                                     
                 <td class="dataTableHeadingContent"><?php echo TABLE_HEADING_DATE_PURCHASED; ?></td>                                     
-                <td class="dataTableHeadingContent" text-right><?php echo NOVALNET_STATUS; ?></td>
-                <td class="dataTableHeadingContent" text-right><?php echo NOVALNET_REFUND_AMOUNT; ?></td>
-                <td class="dataTableHeadingContent" text-right><?php echo NOVALNET_CALLBACK_AMOUNT; ?></td>
-                <td class="dataTableHeadingContent noprint text-right" text-left><?php echo TABLE_HEADING_ACTION; ?></td>
+                <td class="dataTableHeadingContent text-left"><?php echo NOVALNET_STATUS; ?></td>                 
+                <td class="dataTableHeadingContent text-left"><?php echo NOVALNET_REFUND_AMOUNT; ?></td>
+                <td class="dataTableHeadingContent text-left"><?php echo NOVALNET_CALLBACK_AMOUNT; ?></td>
+                <td class="dataTableHeadingContent noprint text-right"><?php echo TABLE_HEADING_ACTION; ?></td>
 
 
 
@@ -145,19 +145,21 @@
                 	<td class="dataTableContent text-center"> <i class="fa-solid fa-circle-check" style="color: green;"></i></td>
                 <?php } ?>
                 <td class="dataTableContent"> <?php echo $novalnet_tran['order_no']; ?> </td>
-                <td class="dataTableContent"> <?php echo '<a href="' . zen_href_link(FILENAME_CUSTOMERS, 'cID=' . $novalnet_tran['customers_id'], 'NONSSL') . '">' . zen_image(DIR_WS_ICONS . 'preview.gif', ICON_PREVIEW . ' ' . TABLE_HEADING_CUSTOMERS) . '</a>&nbsp;' . $novalnet_tran['customers_name'] . ($novalnet_tran['customers_company'] !== '' ? '<br>' . $novalnet_tran['customers_company'] : ''); ?> </td>
+                <td class="dataTableContent"><?php if ($novalnet_tran['status'] !='') { ?> <?php echo '<a href="' . zen_href_link(FILENAME_CUSTOMERS, 'cID=' . $novalnet_tran['customers_id'], 'NONSSL') . '">' . zen_image(DIR_WS_ICONS . 'preview.gif', ICON_PREVIEW . ' ' . TABLE_HEADING_CUSTOMERS) . '</a>&nbsp;' . $novalnet_tran['customers_name'] . ($novalnet_tran['customers_company'] !== '' ? '<br>' . $novalnet_tran['customers_company'] : ''); ?><?php } ?> </td>
                 <td class="dataTableContent"> <?php echo $novalnet_tran['payment_method']; ?> </td>
                 <td class="dataTableContent"> <?php echo $novalnet_tran['tid']; ?> </td>
-		        <td class="dataTableContent"> <?php echo $currencies->format(($novalnet_tran['amount'] / 100), 1, $novalnet_tran['currency']); ?> </td>
+		        <td class="dataTableContent text-right"> <?php echo $currencies->format(($novalnet_tran['amount'] / 100), 1, $novalnet_tran['currency']); ?> </td>
 				<td class="dataTableContent"> <?php echo zen_datetime_short($novalnet_tran['date_purchased']); ?> </td> 
                 <td class="dataTableContent"> <?php echo $novalnet_tran['status']; ?>
                 <td class="dataTableContent"> <?php if(!empty($novalnet_tran['refund_amount'])) echo $currencies->format(($novalnet_tran['refund_amount'] / 100), 1, $novalnet_tran['currency']); ?>
                 <td class="dataTableContent"> <?php if(!empty($novalnet_tran['callback_amount'])) echo $currencies->format(($novalnet_tran['callback_amount'] / 100), 1, $novalnet_tran['currency']); ?>
 				<td class="dataTableContent noprint text-right dataTableButtonCell">
+					<?php if ($novalnet_tran['status'] !='') { ?>
                     <?php
                     echo '<a href="' . zen_href_link(FILENAME_ORDERS, zen_get_all_get_params(array('novalnetId', 'action')) . 'oID=' . $novalnet_tran['order_no'] .'&' . 'novalnetID=' . $novalnet_tran['id'] .'&action=edit' . '&referer=novalnet') . '">' . zen_image(DIR_WS_IMAGES . 'icon_edit.gif', ICON_EDIT) . '</a>';
                     ?>
                     &nbsp;
+                 <?php } ?>
                 </td>
               <?php echo '</tr>';
   }
