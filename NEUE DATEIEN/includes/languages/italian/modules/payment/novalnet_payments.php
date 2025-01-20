@@ -1,0 +1,171 @@
+<?php
+/**
+ * Novalnet payment module
+ * This script is used for German language
+ *
+ * @author     Novalnet AG
+ * @copyright  Copyright (c) Novalnet
+ * @license    https://www.novalnet.de/payment-plugins/kostenlos/lizenz
+ * @link       https://www.novalnet.de
+ *
+ * Script : novalnet_payments.php
+ *
+ */
+define('MODULE_PAYMENT_NOVALNET_CREDENTIALS_ERROR', 'Bitte geben Sie den gültigen Produktaktivierungsschlüssel und Paymentzugriffsschlüssel ein');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOKURL_ERROR', 'Bitte geben Sie eine gültige Webhook-URL ein');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOKURL_CONFIGURE_SUCCESS_TEXT', 'Callbackskript-/ Webhook-URL wurde erfolgreich im Novalnet Admin Portal konfiguriert');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOKURL_CONFIGURE_ALERT_TEXT', 'Sind Sie sicher, dass Sie die Webhook-URL im Novalnet Admin Portal konfigurieren möchten?');
+define('MODULE_PAYMENT_NOVALNET_VALID_MERCHANT_CREDENTIALS_ERROR', 'Bitte füllen Sie die erforderlichen Felder aus');
+
+define('MODULE_PAYMENT_NOVALNET_CONFIG_TEXT_TITLE', 'Novalnet API-Konfiguration');
+define('MODULE_PAYMENT_NOVALNET_CONFIG_TEXT_DESCRIPTION', '<span style="font-weight: bold; color:#878787;">Bevor Sie beginnen, lesen Sie bitte die Installationsanleitung und melden Sie sich mit Ihrem Händlerkonto im <a href="https://admin.novalnet.de" target="_blank" style="text-decoration: underline; font-weight: bold; color:#0080c9;">Novalnet Admin-Portal</a> an. Um ein Händlerkonto zu erhalten, senden Sie bitte eine E-Mail an <a style="font-weight: bold; color:#0080c9;" href="mailto:sales@novalnet.de">sales@novalnet.de</a> oder rufen Sie uns unter +49 89 923068320 an</span><br/><br/><span style="font-weight: bold; color:#878787;">Die Konfigurationen der Zahlungsplugins sind jetzt im <a href="https://admin.novalnet.de" target="_blank" style="text-decoration: underline; font-weight: bold; color:#0080c9;">Novalnet Admin-Portal</a> verfügbar. Navigieren Sie zu Konto -> Konfiguration des Shops Ihrer Projekte, um sie zu konfigurieren.</span><br/><br/><span style="font-weight: bold; color:#878787;">Novalnet ermöglicht es Ihnen, das Verhalten der Zahlungsmethode zu überprüfen, bevor Sie in den Produktionsmodus gehen, indem Sie Testzahlungsdaten verwenden. Zugang zu den Novalnet-Testzahlungsdaten finden Sie <a href="https://developer.novalnet.de/testing" target="_blank"> hier </a> </span>');
+define('MODULE_PAYMENT_NOVALNET_AMOUNT_TRANSFER_NOTE', 'Si prega di trasferire l\'importo %s sul seguente conto.');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_AMOUNT_TRANSFER_NOTE_DUE_DATE', 'Si prega di trasferire il numero di rate di %1$s sul seguente conto entro e non oltre %2$s');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_AMOUNT_TRANSFER_NOTE', 'Si prega di trasferire il numero di rate %1$s sul seguente conto.');
+define('MODULE_PAYMENT_NOVALNET_MULTIBANCO_NOTE', 'Utilizzate il seguente riferimento di pagamento per versare l\'importo di %s presso uno sportello automatico Multibanco o tramite il vostro online banking.');
+define('MODULE_PAYMENT_NOVALNET_MULTIBANCO_SUPPLIER_NOTE', 'Entität: %s');
+define('MODULE_PAYMENT_NOVALNET_AMOUNT_TRANSFER_NOTE_DUE_DATE', 'Si prega di trasferire l\'importo di %1$s sul seguente conto entro e non oltre %2$s');
+define('MODULE_PAYMENT_NOVALNET_BANK_NAME', 'Banca: ');
+define('MODULE_PAYMENT_NOVALNET_IBAN', 'IBAN: ');
+define('MODULE_PAYMENT_NOVALNET_BIC', ' BIC: ');
+define('MODULE_PAYMENT_NOVALNET_ACCOUNT_HOLDER', 'Titolare del conto:  ');
+define('MODULE_PAYMENT_NOVALNET_AMOUNT', ' Importo: ');
+define('MODULE_PAYMENT_NOVALNET_PAYMENT_MODE', 'Ordine di prova');
+define('MODULE_PAYMENT_NOVALNET_BANK_PLACE', 'Città: ');
+define('MODULE_PAYMENT_NOVALNET_TRANSACTION_ID', 'Novalnet ID transazione: ');
+define('MODULE_PAYMENT_NOVALNET_TRANS_SLIP_EXPIRY_DATE', 'Data di scadenza della polizza di versamento: ');
+define('MODULE_PAYMENT_NOVALNET_NEAREST_STORE_DETAILS', 'Le filiali partner Barzahlen più vicine a voi: ');
+define('MODULE_PAYMENT_NOVALNET_PAYMENT_REFERENCE_TEXT', 'Per il bonifico bancario si prega di utilizzare esclusivamente la causale indicata di seguito, in quanto è l\'unico modo in cui il pagamento in entrata può essere assegnato:');
+define('MODULE_PAYMENT_NOVALNET_CONFIRM_TEXT', 'Confermare');
+define('MODULE_PAYMENT_NOVALNET_REFUND_TEXT', 'Rimborso');
+define('MODULE_PAYMENT_NOVALNET_CANCEL_TEXT', 'Cancellazione');
+define('MODULE_PAYMENT_NOVALNET_TRANSACTION_ERROR', 'Il pagamento non è andato a buon fine. Si è verificato un errore.');
+define('MODULE_PAYMENT_NOVALNET_SELECT_STATUS_OPTION', '--Selezionare--');
+define('MODULE_PAYMENT_NOVALNET_TRANS_CONFIRM_SUCCESSFUL_MESSAGE', 'La prenotazione per la TID %1$s è stata confermata in data %2$s.');
+define('MODULE_PAYMENT_NOVALNET_TRANS_CONFIRM_SUCCESSFUL_MESSAGE_TEXT', 'Die Buchung für die TID %1$s wurde am %2$s bestätigt');
+define('MODULE_PAYMENT_NOVALNET_TRANS_DEACTIVATED_MESSAGE', 'Die Transaktion wurde um %1$s Uhr storniert');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCELED_MESSAGE', 'Die Transaktion wurde storniert für die %1$s auf %2$s %3$s');
+define('MODULE_PAYMENT_NOVALNET_AMOUNT_EX', '     (in der kleinsten Währungseinheit, z.B. 100 Cent = entsprechen 1.00 EUR)');
+define('MODULE_PAYMENT_NOVALNET_REFUND_PARENT_TID_MSG', 'Die Rückerstattung für die TID: %1$s mit dem Betrag %2$s wurde veranlasst.');
+define('MODULE_PAYMENT_NOVALNET_REFUND_CHILD_TID_MSG', ' Die neue TID: %s für den erstatteten Betrag');
+
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_SUMMARY_BACKEND', 'Zusammenfassung der Ratenzahlung');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_ADMIN_TEXT', 'Ratenzahlung Stornieren');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_AMOUNT_BACKEND', 'Betrag');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_DATE_BACKEND', 'Datum');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_STATUS_BACKEND', 'Status');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_REFERENCE_BACKEND', 'Novalnet-Transaktions-ID');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_TEXT', 'Stornieren');
+define('MODULE_PAYMENT_NOVALNET_MENTION_GUARANTEE_PAYMENT_PENDING_TEXT', 'Il suo ordine è attualmente in fase di verifica. Vi informeremo a breve sullo stato dell\'ordine. Si prega di notare che potrebbero essere necessarie fino a 24 ore.');
+
+define('MODULE_PAYMENT_NOVALNET_PAYMENT_REFERENCE', 'Uso previsto : %1$s');
+define('NOVALNET_WEBHOOK_CREDIT_NOTE', 'Die Gutschrift für die TID ist erfolgreich eingegangen: %1$s mit Betrag %2$s am %3$s. Bitte entnehmen Sie die TID den Einzelheiten der Bestellung bei BEZAHLT in unserem Novalnet Adminportal: %4$s');
+define('NOVALNET_WEBHOOK_CHARGEBACK_NOTE', 'Chargeback erfolgreich importiert für die TID: %1$s Betrag: %2$s am %3$s um %4$s Uhr. TID der Folgebuchung: %5$s');
+define('NOVALNET_WEBHOOK_NEW_INSTALMENT_NOTE', 'Für die Transaktions-ID ist eine neue Rate eingegangen: %1$s mit Betrag %2$s am %3$s. Die Transaktions-ID der neuen Rate lautet: %4$s');
+define('NOVALNET_WEBHOOK_INSTALMENT_CANCEL_NOTE', 'Die Ratenzahlung für die TID wurde gekündigt: %1$s am %2$s');
+
+define('NOVALNET_PAYMENT_STATUS_PENDING_TO_ONHOLD_TEXT', 'Der Status der Transaktion mit der TID: %1$s wurde am %2$s von ausstehend auf ausgesetzt geändert.');
+
+define('NOVALNET_WEBHOOK_TRANSACTION_UPDATE_NOTE_DUE_DATE', 'Transaktion mit TID %1$s und Betrag %2$s wurde am %3$s erfolgreich aktualisiert.');
+define('NOVALNET_WEBHOOK_TRANSACTION_UPDATE_NOTE', 'Transaktion mit TID %1$s und Betrag %2$s wurde am %3$s erfolgreich aktualisiert.');
+define('NOVALNET_PAYMENT_REMINDER_NOTE', 'Zahlungserinnerung %1$s wurde an den Kunden gesendet.');
+define('NOVALNET_COLLECTION_SUBMISSION_NOTE', 'Die Transaktion wurde an das Inkassobüro übergeben. Inkasso-Referenz: %1$s');
+
+define('MODULE_PAYMENT_NOVALNET_PARTNER_PAYMENT_REFERENCE', 'Partner-Zahlungsreferenz: %s');
+define('MODULE_PAYMENT_NOVALNET_ERROR_MSG', 'Prüfung des Hashes fehlgeschlagen');
+define('MODULE_PAYMENT_NOVALNET_TRANS_CONFIRM_TITLE', '<b>Transaktion verwalten</b>');
+define('MODULE_PAYMENT_NOVALNET_PAYMENT_CAPTURE_CONFIRM', 'Sind Sie sicher, dass Sie die Zahlung erfassen wollen?');
+define('MODULE_PAYMENT_NOVALNET_PAYMENT_VOID_CONFIRM', 'Sind Sie sicher, dass Sie die Zahlung stornieren möchten?');
+define('MODULE_PAYMENT_NOVALNET_SELECT_STATUS_TEXT', 'Bitte Status auswählen');
+define('MODULE_PAYMENT_NOVALNET_BACK_TEXT', 'Zurück');
+define('MODULE_PAYMENT_NOVALNET_REFUND_TITLE', 'Erstattungsverfahren');
+define('MODULE_PAYMENT_NOVALNET_PAYMENT_REFUND_CONFIRM', 'Sind Sie sicher, dass Sie den Betrag erstatten wollen?');
+define('MODULE_PAYMENT_NOVALNET_REFUND_REFERENCE_TEXT', 'Referenz für die Erstattung');
+define('MODULE_PAYMENT_NOVALNET_REFUND_AMT_TITLE', 'Bitte geben Sie den Erstattungsbetrag ein');
+define('MODULE_PAYMENT_NOVALNET_REFUND_REASON_TITLE', 'Grund der Rückerstattung/Stornierung');
+define('MODULE_PAYMENT_NOVALNET_INSTALLMENT_TEXT', 'Wählen Sie Ihren Ratenzahlungsplan <b>(Netto-Kreditbetrag: %s )</b>');
+
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_INSTALMENTS_INFO', 'Informationen zur Ratenzahlung');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_PROCESSED_INSTALMENTS', 'Bearbeitete Raten:  ');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_DUE_INSTALMENTS', 'Fällige Raten:  ');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_NEXT_INSTALMENT_AMOUNT', 'Nächster Ratenbetrag:  ');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_NEXT_INSTALMENT_DATE', 'Nächstes Ratenzahlungsdatum:  ');
+
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_PAY_DATE_BACKEND', 'Bezahltes Datum');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_NEXT_DATE_BACKEND', 'Ratenzahlung Datum');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_REFUND_BACKEND', 'Ratenerstattung');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_STATUS_PAID', 'Bezahlt');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_STATUS_PENDING', 'Ausstehend');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_STATUS_REFUNDED', 'Rückerstattet');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_STATUS_CANCELED', 'Abgesagt');
+
+define('MODULE_PAYMENT_NOVALNET_BOOK_TITLE', 'Transaktion durchführen');
+define('MODULE_PAYMENT_NOVALNET_BOOK_AMT_TITLE', 'Buchungsbetrag der Transaktion');
+define('MODULE_PAYMENT_NOVALNET_TRANS_BOOKED_MESSAGE', 'Ihre Bestellung wurde mit einem Betrag von %s gebucht. Ihre neue TID für den gebuchten Betrag: %s');
+define('MODULE_PAYMENT_NOVALNET_PAYMENT_ZERO_AMOUNT_BOOK_CONFIRM', 'Sind Sie sich sicher, dass Sie den Bestellbetrag buchen wollen?');
+define('MODULE_PAYMENT_NOVALNET_AMOUNT_ERROR_MESSAGE', 'Ungültiger Betrag');
+define('MODULE_PAYMENT_NOVALNET_ZEROAMOUNT_BOOKING_MESSAGE', 'Diese Transaktion wird mit Nullbuchung bearbeitet');
+define('MODULE_PAYMENT_NOVALNET_ZEROAMOUNT_BOOKING_TEXT', '<br><br>Diese Bestellung wird als Nullbuchung verarbeitet. Ihre Zahlungsdaten werden für zukünftige Online-Einkäufe gespeichert.');
+
+define('MODULE_PAYMENT_NOVALNET_WALLET_PAYMENT_SUCCESS_TEXT', 'L\'ordine è stato completato con successo con Google Pay Google Pay (Visa **** %1$s)');
+
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_ALLCYCLES', 'Gesamte Ratenzahlung stornieren');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_ALLCYCLES_TEXT', 'Die Ratenzahlung für die TID wurde gekündigt: %1$s am %2$s und die Rückerstattung wurde mit dem Betrag %3$s');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_REMAINING_CYCLES', 'Alle übrigen Zyklen abbrechen');
+define('MODULE_PAYMENT_NOVALNET_INSTALMENT_CANCEL_REMAINING_CYCLES_TEXT', 'Die Ratenzahlung für die TID wurde gestoppt: %1$s um %2$s');
+
+define('MODULE_PAYMENT_NOVALNET_ALLCYCLES_ERROR_MESSAGE', 'Sind Sie sicher, dass Sie alle Zyklen abbrechen wollen?');
+define('MODULE_PAYMENT_NOVALNET_REMAINING_CYCLES_ERROR_MESSAGE', 'Sind Sie sicher, dass Sie die verbleibenden Zyklen abbrechen wollen?');
+
+define('MODULE_PAYMENT_NOVALNET_ONHOLD_DE_ORDER_STATUS', 'Pagamento autorizzato (Novalnet)');
+define('MODULE_PAYMENT_NOVALNET_CANCELED_DE_ORDER_STATUS', 'Annullato (Novalnet)');
+define('MODULE_PAYMENT_NOVALNET_ORDER_MAIL_SUBJECT', ' Conferma d\'ordine - L\'ordine numero %1$s a %2$s è stato confermato!');
+define('MODULE_PAYMENT_NOVALNET_ORDER_MAIL_MESSAGE', ' Conferma dell\'ordine da %s');
+define('MODULE_PAYMENT_NOVALNET_ORDER_MAIL_DATE', 'Data ordine: %s');
+define('MODULE_PAYMENT_NOVALNET_ORDER_NUMBER', 'Numero di ordine: %s');
+define('MODULE_PAYMENT_NOVALNET_DELIVERY_ADDRESS', 'Indirizzo di consegna');
+define('MODULE_PAYMENT_NOVALNET_BILLING_ADDRESS', 'Indirizzo di fatturazione');
+define('MODULE_PAYMENT_NOVALNET_ORDER_CONFIRMATION', 'Conferma del pagamento:');
+define('MODULE_PAYMENT_NOVALNET_MAIL_TEMPLATE_DEAR_TEXT', 'Gentile signore/signora %s,');
+define('MODULE_PAYMENT_NOVALNET_MAIL_TEMPLATE_BEST_REAGRDS', 'Cordiali saluti,');
+define('MODULE_PAYMENT_NOVALNET_MAIL_TEMPLATE_NOVALNET', 'Das Novalnet-Team');
+define('MODULE_PAYMENT_NOVALNET_CUSTOMER_SALUTATION', 'Gentile signore/signora  ');
+
+define('MODULE_PAYMENT_NOVALNET_INCL_TAX_LABEL', 'IVA inclusa');
+define('MODULE_PAYMENT_NOVALNET_EXCL_TAX_LABEL', 'IVA esclusa');
+define('MODULE_PAYMENT_NOVALNET_DISCOUNT_AND_GIFT_VOUCHER_LABEL', 'Sconto');
+define('MODULE_PAYMENT_NOVALNET_SHIPPING_LABEL', 'Spedizione');
+
+define('MODULE_PAYMENT_NOVALNET_AMOUNT_UPDATE_NOTE', 'Der Transaktionsbetrag %1$s wurde erfolgreich aktualisiert am %2$s');
+define('MODULE_PAYMENT_NOVALNET_DUEDATE_UPDATE_NOTE', ' Fälligkeitsdatum der Transaktion  %1$s wurde erfolgreich aktualisiert am %2$s');
+define('MODULE_PAYMENT_NOVALNET_AMOUNT_DUEDATE_UPDATE_NOTE', 'Der Transaktion Betrag %1$s und das Fälligkeitsdatum %2$s wurden erfolgreich aktualisiert auf %3$s');
+define('MODULE_PAYMENT_NOVALNET_BARZAHLEN_SUCCESS_BUTTON', 'Bezahlen mit Barzahlen');
+define('MODULE_PAYMENT_NOVALNET_WALLET_TOTAL_LABEL', 'Geschätzter Gesamtbetrag (Keine Angebote angewendet)');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_ACTION_REQUIRED', 'Aktion erforderlich - Bestellung nicht gefunden für die Transaktions-ID: ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_IN', ' im ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_SALUTATION', 'Sehr geehrter ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_ATTENTION', 'Wir möchten Sie auf die folgenden Transaktionsdetails aufmerksam machen:');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_COMMUNICATION_PROBLEM', 'Die Zahlung für die oben genannten Transaktionsdetails wurde in Novalnet erfolgreich verarbeitet. Es scheint jedoch, dass unser System Schwierigkeiten bei der Kommunikation mit Ihrem Shopsystem hatte.');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_DISCREPANCIES', 'Wir bitten Sie, eine der folgenden Maßnahmen zu ergreifen, um Unstimmigkeiten bei der Transaktion zu vermeiden:');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MANUAL_ORDER_CREATION', 'Manuelle Auftragserstellung: Bitte legen Sie eine Bestellung manuell im Back-Office Ihres Shops an und erstellen Sie eine Rechnung entsprechend den angegebenen Transaktionsdetails.');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_REFUND_INITIATION', 'Einleitung der Rückerstattung: Alternativ können Sie über das Novalnet Admin Portal(https://admin.novalnet.de/) eine Rückerstattung der Transaktion beantragen.');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_PROMPT_REVIEW', 'Wir würden es sehr begrüßen, wenn Sie diese Vorgänge umgehend überprüfen und entsprechende Maßnahmen ergreifen würden.');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_EMAIL', 'Kunden-E-Mail: ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_PAYMENT_TYPE', 'Zahlungsart: ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_TID_STATUS', 'Transaktions-ID Status: ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_TID', 'Transaktions-ID: ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_PROJECT_ID', 'Projekt-ID: ');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_REGARDS', 'Herzliche Grüße,');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_CAPTURE_SUBJECT', 'Transaktion via Novalnet bestätigt');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_CANCEL_SUBJECT', 'Transaktion Storniert via Novalnet');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_REFUND_SUBJECT', 'Transaktion Rückerstattung via Novalnet');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_CREDIT_SUBJECT', 'Guthaben erhalten via Novalnet');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_CHARGEBACK_SUBJECT', 'Rückbuchung via Novalnet erhalten');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_INSTALMENT_SUBJECT', 'Neue Rate via Novalnet erhalten');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_INSTALMENT_CANCEL_SUBJECT', 'Ratenzahlung via Novalnet gekündigt');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_TRANS_UPDATE_SUBJECT', 'Transaktion aktualisiert via Novalnet');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_REMINDER_SUBJECT', 'Zahlungserinnerung via Novalnet');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_COLLECTION_SUBMISSION_SUBJECT', 'Inkassoübergabe via Novalnet');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_SUPPORT_TEXT', 'Wenn Sie weitere Unterstützung benötigen, wenden Sie sich bitte an unser Support-Team unter support@novalnet.de. Oder besuchen Sie Ihr Novalnet-Administrationsportal für weitere Informationen.');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_TRANS_DETAILS_TEXT', 'Transaktionsdetails:');
+define('MODULE_PAYMENT_NOVALNET_WEBHOOK_MAIL_COLLECTION_STATUS', 'Inkasso Status: ');
